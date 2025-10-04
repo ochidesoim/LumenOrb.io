@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The LumenOrb Canvas: An Orbital Exhibition</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&family=Syne:wght@700;800&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Poppins', sans-serif;
+            background-color: #005B41; /* Emerald Green */
+            color: #F5F5DC; /* Beige/Off-white text */
+        }
+
+        .font-display {
+            font-family: 'Syne', sans-serif;
+            font-weight: 800;
+            letter-spacing: -0.02em;
+        }
+        
+        /* Art Block Styling */
+        .art-block {
+            transition: transform 0.3s ease-in-out, box-shadow 0.3s ease-in-out;
+            border: 2px solid #F5F5DC;
+        }
+
+        .art-block:hover {
+            transform: translateY(-10px) rotate(-1deg);
+            box-shadow: 10px 10px 0px #F5F5DC;
+        }
+        
+        .art-block-content h3 {
+            font-family: 'Syne', sans-serif;
+            font-weight: 700;
+        }
+
+        /* Color Palette */
+        .color-space-blue { background-color: #0033A0; } /* Represents Earth, Connectivity */
+        .color-commerce-yellow { background-color: #FFD700; } /* Represents Business, Data */
+        .color-challenge-red { background-color: #D40000; } /* Represents Danger, Challenges */
+        .color-neutral-black { background-color: #1a1a1a; }
+        .color-neutral-gray { background-color: #d3d3d3; }
+
+        /* Line Work */
+        .divider-line {
+            border-bottom: 2px solid #F5F5DC;
+            width: 100%;
+        }
+
+        /* Abstract Background Shapes */
+        .floating-shape {
+            position: absolute;
+            z-index: 0;
+            border: 2px solid #F5F5DC;
+            transition: transform 0.5s ease-out;
+        }
+
+        .circle {
+            border-radius: 50%;
+        }
+
+        /* Custom animation for debris field */
+        @keyframes drift {
+            0% { transform: translate(0, 0) rotate(0deg); }
+            25% { transform: translate(10px, 20px) rotate(15deg); }
+            50% { transform: translate(-15px, -10px) rotate(-10deg); }
+            75% { transform: translate(5px, -20px) rotate(5deg); }
+            100% { transform: translate(0, 0) rotate(0deg); }
+        }
+
+        .debris-item {
+            position: absolute;
+            background-color: #F5F5DC;
+            animation: drift 15s infinite ease-in-out alternate;
+        }
+    </style>
+</head>
+<body class="antialiased">
+
+    <!-- Floating Background Art -->
+    <div class="fixed inset-0 overflow-hidden z-0 opacity-20">
+        <div class="floating-shape circle color-space-blue/20" style="width: 30vw; height: 30vw; top: -10vw; left: -5vw;"></div>
+        <div class="floating-shape color-commerce-yellow/20" style="width: 15vw; height: 15vw; top: 20vh; right: 5vw; transform: rotate(25deg);"></div>
+        <div class="floating-shape color-challenge-red/10" style="width: 25vw; height: 25vw; bottom: 5vh; left: 10vw; transform: rotate(-15deg);"></div>
+    </div>
+
+    <div class="relative min-h-screen p-8 md:p-12 lg:p-16 z-10">
+        <!-- Back Button -->
+        <a href="page2.html" class="absolute top-4 right-8 md:top-6 md:right-12 z-20 flex-shrink-0 bg-[#F5F5DC]/20 border border-[#F5F5DC] text-[#F5F5DC] font-semibold py-2 px-6 rounded-lg hover:bg-[#F5F5DC] hover:text-[#005B41] transition-all">
+            &larr; Back to Mission
+        </a>
+
+        <!-- Header -->
+        <header class="text-center mb-24 border-b-4 border-[#F5F5DC] pb-6">
+            <h1 class="font-display text-5xl md:text-7xl lg:text-8xl">THE LUMENORB CANVAS</h1>
+            <p class="text-xl md:text-2xl mt-2">An Orbital Exhibition on Commerce, Challenge, and Control</p>
+        </header>
+
+        <main class="space-y-32">
+
+            <!-- Section 1: The Primary Colors of Commerce -->
+            <section>
+                <div class="text-center mb-12">
+                    <h2 class="font-display text-4xl md:text-5xl">I. Primary Colors of Commerce</h2>
+                    <p class="max-w-3xl mx-auto mt-4 text-lg">Business models defining the new orbital market, each a fundamental component of a larger composition.</p>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+                    <!-- Telecoms -->
+                    <article class="art-block color-space-blue">
+                        <div class="art-block-content p-6 text-white">
+                            <h3 class="text-2xl border-b-2 border-white pb-2 mb-4">Connectivity</h3>
+                            <p class="font-light">Constellations like Starlink and OneWeb paint the globe with low-latency broadband, connecting remote regions and bridging the digital divide with strokes of pure data.</p>
+                        </div>
+                    </article>
+                    <!-- Earth Observation -->
+                    <article class="art-block color-commerce-yellow">
+                        <div class="art-block-content p-6 text-black">
+                            <h3 class="text-2xl border-b-2 border-black pb-2 mb-4">Observation</h3>
+                            <p class="font-light">A canvas of high-resolution imagery captures our planet's form. Satellites monitor environmental health, agriculture, and disaster response with rapid, focused detail.</p>
+                        </div>
+                    </article>
+                    <!-- Manufacturing -->
+                    <article class="art-block color-neutral-gray">
+                        <div class="art-block-content p-6 text-black">
+                            <h3 class="text-2xl border-b-2 border-black pb-2 mb-4">Manufacturing</h3>
+                            <p class="font-light">In the studio of microgravity, unique materials like fiber optics and pharmaceuticals are sculpted—creations impossible to replicate in Earth's heavy atmosphere.</p>
+                        </div>
+                    </article>
+                    <!-- Servicing -->
+                    <article class="art-block color-neutral-black">
+                        <div class="art-block-content p-6 text-white">
+                            <h3 class="text-2xl border-b-2 border-white pb-2 mb-4">Servicing</h3>
+                            <p class="font-light">A model of restoration and sustainability. On-orbit robotics refuel, repair, and repurpose assets, extending their life and cleaning the canvas for future works.</p>
+                        </div>
+                    </article>
+                </div>
+            </section>
+
+            <div class="divider-line my-16"></div>
+
+            <!-- Section 2: The Shattered Sky -->
+            <section>
+                <div class="text-center mb-16">
+                    <h2 class="font-display text-4xl md:text-5xl">II. The Shattered Sky</h2>
+                    <p class="max-w-3xl mx-auto mt-4 text-lg">The unintended consequences of creation. Sustainability challenges that threaten to fracture the orbital environment into an unusable state.</p>
+                </div>
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
+                    <div class="lg:col-span-2 relative h-96 border-2 border-[#F5F5DC] bg-black/20 overflow-hidden">
+                        <!-- Debris Field Visualization -->
+                        <h3 class="font-display text-2xl p-4 text-challenge-red">Kessler Syndrome</h3>
+                        <div class="debris-item" style="width: 10px; height: 10px; top: 20%; left: 30%; animation-duration: 12s;"></div>
+                        <div class="debris-item" style="width: 5px; height: 15px; top: 50%; left: 50%; transform: rotate(45deg); animation-duration: 20s;"></div>
+                        <div class="debris-item" style="width: 8px; height: 8px; top: 70%; left: 20%; animation-duration: 18s; background-color: #aaa;"></div>
+                        <div class="debris-item" style="width: 12px; height: 4px; top: 40%; left: 80%; animation-duration: 14s;"></div>
+                        <div class="debris-item" style="width: 6px; height: 6px; top: 80%; left: 60%; animation-duration: 22s; background-color: #aaa;"></div>
+                        <div class="absolute inset-0 flex items-center justify-center p-8">
+                            <p class="text-center text-lg bg-[#F5F5DC]/90 text-black p-4 border border-black">A single collision creates a cascade of fractures, each impact shattering more objects until the orbit is an impassable field of high-velocity shrapnel. A self-perpetuating masterpiece of destruction.</p>
+                        </div>
+                    </div>
+                    <div class="space-y-8">
+                        <article class="art-block color-challenge-red">
+                            <div class="p-6 text-white">
+                                <h3 class="text-xl">Atmospheric & Light Pollution</h3>
+                                <p class="font-light mt-2">The brushstrokes of launch exhaust and re-entry burnup leave their mark on the atmosphere. The glow of constellations obscures the cosmic backdrop, a form of light pollution for astronomy.</p>
+                            </div>
+                        </article>
+                        <article class="art-block border-challenge-red">
+                             <div class="p-6">
+                                <h3 class="text-xl">Spectrum Scarcity</h3>
+                                <p class="font-light mt-2">The radio spectrum, an invisible canvas, is becoming crowded. The noise from thousands of satellites threatens to overpower the faint signals studied by radio astronomers, creating a cacophony of interference.</p>
+                            </div>
+                        </article>
+                    </div>
+                </div>
+            </section>
+            
+            <div class="divider-line my-16"></div>
+
+            <!-- Section 3: Lines of Governance & Geopolitics -->
+            <section>
+                 <div class="text-center mb-12">
+                    <h2 class="font-display text-4xl md:text-5xl">III. Composition of Control</h2>
+                    <p class="max-w-3xl mx-auto mt-4 text-lg">The forces and frameworks attempting to bring order to the orbital chaos. A complex interplay of national interests and international guidelines.</p>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <article class="art-block p-6 space-y-4">
+                        <h3 class="text-2xl">Geopolitical Forces</h3>
+                        <p class="font-light">LumenOrb is a gallery of national ambition. Dual-use technologies for communication and observation become strategic assets. Nations compose their own constellations, creating a competitive exhibition of power and influence in the sky.</p>
+                        <!-- Abstract representation of overlapping interests -->
+                        <div class="relative h-24">
+                            <div class="absolute top-0 left-10 w-24 h-24 color-space-blue opacity-70 rounded-full"></div>
+                            <div class="absolute top-5 left-20 w-24 h-24 color-commerce-yellow opacity-70 rounded-full"></div>
+                            <div class="absolute top-2 left-16 w-16 h-16 color-challenge-red opacity-70 rounded-full"></div>
+                        </div>
+                    </article>
+                    <article class="art-block p-6 space-y-4">
+                        <h3 class="text-2xl">Lines of Governance</h3>
+                        <p class="font-light">International bodies like COPUOS draw faint guidelines, while national agencies like the FCC enforce bolder lines through licensing. Yet, the canvas lacks a universal framework for space traffic management and liability, leaving much of the composition dangerously undefined.</p>
+                         <!-- Abstract representation of frameworks -->
+                         <div class="relative h-24 space-y-4 pt-4">
+                             <div class="w-full h-0.5 bg-[#F5F5DC]"></div>
+                             <div class="w-3/4 h-0.5 bg-[#F5F5DC] opacity-50 ml-auto"></div>
+                             <div class="w-1/2 h-0.5 bg-[#F5F5DC] opacity-25"></div>
+                         </div>
+                    </article>
+                </div>
+            </section>
+
+            <div class="divider-line my-16"></div>
+
+            <!-- Section 4: The Artist's Dilemma -->
+            <section>
+                <div class="text-center mb-12">
+                   <h2 class="font-display text-4xl md:text-5xl">IV. The Artist's Dilemma</h2>
+                   <p class="max-w-3xl mx-auto mt-4 text-lg">The core tension of the LumenOrb ecosystem: the "Tragedy of the Commons," where short-term economic incentives clash with the long-term health of the shared orbital canvas.</p>
+                </div>
+               <div class="art-block">
+                   <div class="grid grid-cols-1 md:grid-cols-5">
+                       <div class="md:col-span-2 color-commerce-yellow p-6 text-black border-b-2 md:border-b-0 md:border-r-2 border-[#F5F5DC]">
+                           <h3 class="text-2xl border-b-2 border-black pb-2 mb-4">The Price of Profit</h3>
+                           <p class="font-light">An operator who cuts corners on sustainability gains a competitive advantage. Cheaper satellites, no fuel reserved for de-orbiting, and ignoring collision warnings can lead to lower prices and greater market share. The economic incentive is to prioritize immediate profit.</p>
+                       </div>
+                       <div class="md:col-span-1 flex items-center justify-center p-6">
+                           <svg xmlns="http://www.w3.org/2000/svg" class="h-16 w-16 text-challenge-red" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                               <path stroke-linecap="round" stroke-linejoin="round" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+                           </svg>
+                       </div>
+                       <div class="md:col-span-2 color-space-blue p-6 text-white">
+                           <h3 class="text-2xl border-b-2 border-white pb-2 mb-4">The Cost of Conscience</h3>
+                           <p class="font-light">A "good actor" incurs significant costs. Maneuvering to avoid debris consumes propellant, shortening a satellite's revenue-generating life. Sustainable design and robust de-orbit plans add expense and complexity. Responsibility is a direct business disadvantage without enforced rules.</p>
+                       </div>
+                   </div>
+               </div>
+               <p class="text-center mt-8 text-lg max-w-4xl mx-auto">This dilemma reveals the great, unsolved work of our time: creating a binding, international framework that makes sustainability a mandatory cost for all, ensuring the canvas of space remains clean for the artists of tomorrow.</p>
+            </section>
+
+        </main>
+    </div>
+</body>
+</html>
+

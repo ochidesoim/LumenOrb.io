@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Varuna Ion Drives | Project LEO</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --saffron: #FF9933;
+            --indigo: #0a192f;
+            --gold: #FFD700;
+            --off-white: #F3EFE0;
+            --cyan: #38bdf8;
+            --ion-blue: #67E8F9;
+        }
+        body {
+            font-family: 'Poppins', sans-serif;
+            background-color: var(--indigo);
+            color: var(--off-white);
+            background-image: url('https://www.transparenttextures.com/patterns/stardust.png');
+        }
+        .font-display {
+            font-family: 'Syne', sans-serif;
+            font-weight: 800;
+        }
+        .text-saffron { color: var(--saffron); }
+        .text-gold { color: var(--gold); }
+        .text-cyan { color: var(--cyan); }
+
+        .ship-container {
+            position: relative;
+            width: 800px;
+            height: 400px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .ship-profile {
+            width: 350px;
+            height: 120px;
+            background-color: rgba(100, 116, 139, 0.3);
+            border: 2px solid var(--cyan);
+            border-radius: 1rem;
+            position: relative;
+            display: flex;
+            align-items: center;
+            padding: 0 2rem;
+        }
+        
+        .thruster-housing {
+            position: absolute;
+            width: 40px;
+            height: 40px;
+            background-color: #334155;
+            border-radius: 50%;
+            border: 2px solid var(--cyan);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        /* Positioning each thruster */
+        .thruster-rear { right: -20px; top: 50%; transform: translateY(-50%); width: 60px; height: 60px; }
+        .thruster-front { left: -20px; top: 50%; transform: translateY(-50%); }
+        .thruster-top { top: -20px; left: 50%; transform: translateX(-50%); }
+        .thruster-bottom { bottom: -20px; left: 50%; transform: translateX(-50%); }
+
+        .ion-trail {
+            position: absolute;
+            background: linear-gradient(to right, var(--ion-blue), transparent);
+            box-shadow: 0 0 15px var(--ion-blue), 0 0 30px var(--ion-blue);
+            animation: flicker 0.2s infinite alternate;
+            opacity: 0;
+            transition: transform 0.5s ease-out, opacity 0.5s ease-out;
+        }
+
+        /* Trail for REAR thruster */
+        .thruster-rear .ion-trail { left: 100%; top: 50%; width: 400px; height: 40px; border-radius: 0 50% 50% 0; transform: translateY(-50%) scaleX(0); transform-origin: left; }
+        .thruster-rear.active .ion-trail { transform: translateY(-50%) scaleX(1); opacity: 0.7; }
+
+        /* Trail for FRONT thruster */
+        .thruster-front .ion-trail { right: 100%; top: 50%; width: 100px; height: 20px; border-radius: 50% 0 0 50%; transform: translateY(-50%) scaleX(0); transform-origin: right; }
+        .thruster-front.active .ion-trail { transform: translateY(-50%) scaleX(1); opacity: 0.7; }
+
+        /* Trail for TOP thruster */
+        .thruster-top .ion-trail { bottom: 100%; left: 50%; width: 20px; height: 100px; border-radius: 50% 50% 0 0; background: linear-gradient(to top, var(--ion-blue), transparent); transform: translateX(-50%) scaleY(0); transform-origin: bottom; }
+        .thruster-top.active .ion-trail { transform: translateX(-50%) scaleY(1); opacity: 0.7; }
+        
+        /* Trail for BOTTOM thruster */
+        .thruster-bottom .ion-trail { top: 100%; left: 50%; width: 20px; height: 100px; border-radius: 0 0 50% 50%; background: linear-gradient(to bottom, var(--ion-blue), transparent); transform: translateX(-50%) scaleY(0); transform-origin: top; }
+        .thruster-bottom.active .ion-trail { transform: translateX(-50%) scaleY(1); opacity: 0.7; }
+
+
+        @keyframes flicker {
+            from { opacity: 0.6; }
+            to { opacity: 0.8; }
+        }
+        
+        .thruster-btn {
+            background-color: rgba(56, 189, 248, 0.2);
+            border: 1px solid var(--cyan);
+            color: var(--cyan);
+            transition: all 0.2s ease;
+        }
+        .thruster-btn:hover {
+            background-color: rgba(56, 189, 248, 0.4);
+        }
+        .thruster-btn.active {
+            background-color: var(--cyan);
+            color: var(--indigo);
+            box-shadow: 0 0 10px var(--cyan);
+        }
+        .thruster-btn:disabled {
+             opacity: 0.4;
+             cursor: not-allowed;
+             background-color: rgba(100,116,139,0.2);
+             border-color: rgba(100,116,139,0.5);
+             color: rgba(100,116,139,0.8);
+        }
+
+        .control-btn:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+        }
+
+        .info-tooltip {
+            position: relative;
+            display: inline-block;
+            cursor: help;
+        }
+        .info-tooltip .tooltip-text {
+            visibility: hidden;
+            width: 240px;
+            background-color: #1e293b;
+            color: #fff;
+            text-align: center;
+            border-radius: 6px;
+            padding: 8px;
+            position: absolute;
+            z-index: 10;
+            bottom: 125%;
+            left: 50%;
+            margin-left: -120px;
+            opacity: 0;
+            transition: opacity 0.3s;
+            border: 1px solid var(--cyan);
+            font-size: 0.8rem;
+            font-family: 'Poppins', sans-serif;
+        }
+        .info-tooltip:hover .tooltip-text {
+            visibility: visible;
+            opacity: 1;
+        }
+    </style>
+</head>
+<body class="antialiased overflow-x-hidden">
+
+    <header class="py-6 px-8">
+        <div class="max-w-7xl mx-auto flex justify-between items-center">
+            <a href="index.html" class="font-display text-3xl text-saffron">LumenOrb</a>
+            <a href="page2.html" class="bg-saffron/20 border border-saffron text-saffron font-semibold py-2 px-6 rounded-lg hover:bg-saffron hover:text-indigo transition-all">
+                &larr; Back to Mission
+            </a>
+        </div>
+    </header>
+
+    <main class="py-12 px-8">
+        <div class="max-w-7xl mx-auto">
+            <div class="text-center">
+                <h1 class="font-display text-4xl md:text-5xl text-saffron">Varuna Ion Drives</h1>
+                <p class="mt-4 max-w-3xl mx-auto text-lg text-gray-300">
+                    The heart of LumenOrb's maneuverability. These hyper-efficient electric propulsion systems use electromagnetic fields to accelerate ions, providing gentle, constant thrust for orbital adjustments and long-duration travel.
+                </p>
+            </div>
+
+            <div class="mt-16 grid grid-cols-1 lg:grid-cols-5 gap-8 items-center">
+                <div class="lg:col-span-3 p-8 rounded-lg flex flex-col items-center justify-center min-h-[400px]">
+                    <div id="thruster-visualizer" class="ship-container">
+                        <div class="ship-profile">
+                            <span class="font-display text-2xl text-cyan">LumenOrb</span>
+                            <!-- Thruster Housings -->
+                            <div id="thruster-rear" class="thruster-housing thruster-rear"><div class="ion-trail"></div></div>
+                            <div id="thruster-front" class="thruster-housing thruster-front"><div class="ion-trail"></div></div>
+                            <div id="thruster-top" class="thruster-housing thruster-top"><div class="ion-trail"></div></div>
+                            <div id="thruster-bottom" class="thruster-housing thruster-bottom"><div class="ion-trail"></div></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="lg:col-span-2 p-8 rounded-lg space-y-8" style="background: rgba(6, 17, 33, 0.5);">
+                    <div>
+                        <h3 class="font-display text-2xl text-cyan mb-4">Propulsion Control</h3>
+                        <div id="manual-thruster-controls" class="grid grid-cols-2 gap-3">
+                            <button class="thruster-btn rounded-lg py-3 font-semibold" data-thruster="main">Main Engine</button>
+                            <button class="thruster-btn rounded-lg py-3 font-semibold" data-thruster="forward">Forward</button>
+                            <button class="thruster-btn rounded-lg py-3 font-semibold" data-thruster="top">Top</button>
+                            <button class="thruster-btn rounded-lg py-3 font-semibold" data-thruster="bottom">Bottom</button>
+                        </div>
+                        <div class="mt-4 flex items-center justify-center space-x-4">
+                            <button id="auto-btn" class="control-btn w-full bg-cyan hover:bg-cyan/80 text-indigo font-bold py-3 rounded-lg transition-colors">Auto Stability</button>
+                            <button id="shutdown-btn" class="control-btn w-full bg-saffron/20 hover:bg-saffron/40 text-saffron font-bold py-3 rounded-lg transition-colors">Shutdown All</button>
+                        </div>
+                         <p class="text-center text-gold text-lg mt-4 font-display">
+                            Status: <span id="engine-status">Idle</span>
+                        </p>
+                    </div>
+
+                    <div>
+                        <h3 class="font-display text-2xl text-cyan mb-4">Performance Readout</h3>
+                        <div class="space-y-4">
+                            <div class="p-4 bg-black/30 rounded-lg">
+                                <p class="text-sm text-gray-400">Total Thrust</p>
+                                <p class="text-3xl font-bold text-gold"><span id="thrust-output">0</span> mN</p>
+                            </div>
+                            <div class="p-4 bg-black/30 rounded-lg">
+                                <p class="text-sm text-gray-400">Total Power Draw</p>
+                                <p class="text-3xl font-bold text-gold"><span id="power-draw">0.0</span> kW</p>
+                            </div>
+                             <div class="p-4 bg-black/30 rounded-lg">
+                                <div class="flex justify-between items-center">
+                                    <p class="text-sm text-gray-400">Specific Impulse (Isp)</p>
+                                    <div class="info-tooltip">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-gray-500" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd" /></svg>
+                                        <span class="tooltip-text">Isp measures fuel efficiency. Ion drives are highly efficient (~3000s) compared to chemical rockets (~450s), needing far less propellant.</span>
+                                    </div>
+                                </div>
+                                <p class="text-3xl font-bold text-gold"><span id="isp-output">N/A</span> s</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div>
+                        <h3 class="font-display text-2xl text-cyan mb-4">Stability Readout</h3>
+                        <div class="space-y-3">
+                            <div class="p-3 bg-black/30 rounded-lg flex justify-between items-center">
+                                <div class="flex items-center space-x-3">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-cyan" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M10 20l4-16m4 4l-4 4-4-4" /></svg>
+                                    <div>
+                                        <p class="font-semibold text-white">Attitude Control</p>
+                                        <p class="text-xs text-gray-400">Deviation: <span id="attitude-deviation">0.00°</span></p>
+                                    </div>
+                                </div>
+                                <span id="attitude-status" class="font-semibold text-gray-400">INACTIVE</span>
+                            </div>
+                            <div class="p-3 bg-black/30 rounded-lg flex justify-between items-center">
+                                <div class="flex items-center space-x-3">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-cyan" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M17.657 18.657A8 8 0 016.343 7.343S7 9 9 10c0-2 .5-5 2.986-7C14 5 16.09 5.777 17.657 7.343A8 8 0 0118 18c-1 .5-3 1.5-3 1.5s2 1 3 1a8 8 0 00-1.343-.343z" /></svg>
+                                    <div>
+                                        <p class="font-semibold text-white">Thermal Regulation</p>
+                                        <p class="text-xs text-gray-400">Core Temp: <span id="thermal-temp">25°C</span></p>
+                                    </div>
+                                </div>
+                                <span id="thermal-status" class="font-semibold text-green-400">NOMINAL</span>
+                            </div>
+                             <div class="p-3 bg-black/30 rounded-lg flex justify-between items-center">
+                                <div class="flex items-center space-x-3">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-cyan" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M3 3a1 1 0 000 2v8a1 1 0 001 1h12a1 1 0 100-2H5V3a1 1 0 00-2 0zm11 1a1 1 0 10-2 0v10a1 1 0 102 0V4z" clip-rule="evenodd" /></svg>
+                                    <div>
+                                        <p class="font-semibold text-white">Propellant Flow</p>
+                                        <p class="text-xs text-gray-400">Rate: <span id="propellant-flow">0 mg/s</span></p>
+                                    </div>
+                                </div>
+                                <span id="propellant-status" class="font-semibold text-gray-400">IDLE</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const manualControls = document.getElementById('manual-thruster-controls');
+            const thrusterBtns = manualControls.querySelectorAll('.thruster-btn');
+            const autoBtn = document.getElementById('auto-btn');
+            const shutdownBtn = document.getElementById('shutdown-btn');
+            
+            const thrustEl = document.getElementById('thrust-output');
+            const powerEl = document.getElementById('power-draw');
+            const ispEl = document.getElementById('isp-output');
+            const statusEl = document.getElementById('engine-status');
+            const attitudeDeviationEl = document.getElementById('attitude-deviation');
+            const propellantFlowEl = document.getElementById('propellant-flow');
+
+            const thrusterElements = {
+                main: document.getElementById('thruster-rear'),
+                forward: document.getElementById('thruster-front'),
+                top: document.getElementById('thruster-top'),
+                bottom: document.getElementById('thruster-bottom'),
+            };
+
+            const thrusterSpecs = {
+                main: { thrust: 250, power: 4.5, flow: 8.5 },
+                forward: { thrust: 50, power: 1.0, flow: 1.7 },
+                top: { thrust: 50, power: 1.0, flow: 1.7 },
+                bottom: { thrust: 50, power: 1.0, flow: 1.7 },
+            };
+
+            let state = { main: false, forward: false, top: false, bottom: false, auto: false };
+            let autoStabilityInterval;
+
+            function updateAllSystems(finalStatus) {
+                let totalThrust = 0, totalPower = 0, totalFlow = 0, activeThrusters = 0;
+
+                Object.keys(state).forEach(thruster => {
+                    if (thruster === 'auto') return;
+                    const isActive = state[thruster];
+                    const element = thrusterElements[thruster];
+                    const btn = document.querySelector(`[data-thruster="${thruster}"]`);
+
+                    if (isActive) {
+                        element.classList.add('active');
+                        if(btn) btn.classList.add('active');
+                        totalThrust += thrusterSpecs[thruster].thrust;
+                        totalPower += thrusterSpecs[thruster].power;
+                        totalFlow += thrusterSpecs[thruster].flow;
+                        activeThrusters++;
+                    } else {
+                        element.classList.remove('active');
+                        if(btn) btn.classList.remove('active');
+                    }
+                });
+
+                thrustEl.textContent = totalThrust;
+                powerEl.textContent = totalPower.toFixed(1);
+                propellantFlowEl.textContent = `${totalFlow.toFixed(1)} mg/s`;
+                ispEl.textContent = activeThrusters > 0 || state.auto ? '3,000' : 'N/A';
+
+                if (finalStatus) {
+                    statusEl.textContent = finalStatus;
+                } else if (state.auto) {
+                    statusEl.textContent = 'Auto-Stabilizing';
+                    attitudeDeviationEl.textContent = (Math.random() * 0.01).toFixed(3) + '°';
+                } else if (activeThrusters > 0) {
+                    statusEl.textContent = `${activeThrusters} Thruster(s) Active`;
+                    attitudeDeviationEl.textContent = (Math.random() * 0.05).toFixed(2) + '°';
+                } else {
+                    statusEl.textContent = 'Idle';
+                    attitudeDeviationEl.textContent = '0.00°';
+                }
+            }
+
+            manualControls.addEventListener('click', (e) => {
+                if (e.target.classList.contains('thruster-btn') && !state.auto) {
+                    const thruster = e.target.dataset.thruster;
+                    state[thruster] = !state[thruster];
+                    updateAllSystems();
+                }
+            });
+
+            function runAutoStability() {
+                const isTopBottom = Math.random() > 0.5;
+                const activePair = isTopBottom ? ['top', 'bottom'] : ['forward', 'main'];
+                
+                state[activePair[0]] = true;
+                state[activePair[1]] = true;
+                updateAllSystems();
+
+                setTimeout(() => {
+                    state[activePair[0]] = false;
+                    state[activePair[1]] = false;
+                    updateAllSystems();
+                }, 400);
+            }
+
+            autoBtn.addEventListener('click', () => {
+                state.auto = true;
+                autoBtn.classList.add('active');
+                autoBtn.disabled = true;
+                thrusterBtns.forEach(btn => btn.disabled = true);
+                Object.assign(state, { main: false, forward: false, top: false, bottom: false });
+                updateAllSystems();
+
+                let count = 0;
+                autoStabilityInterval = setInterval(() => {
+                    if (count >= 3) {
+                        clearInterval(autoStabilityInterval);
+                        Object.assign(state, { top: false, bottom: false, forward: false, main: false, auto: false });
+                        updateAllSystems("Stabilization Complete");
+                        autoBtn.classList.remove('active');
+                        autoBtn.disabled = false;
+                        thrusterBtns.forEach(btn => btn.disabled = false);
+                        return;
+                    }
+                    runAutoStability();
+                    count++;
+                }, 1000);
+            });
+
+            shutdownBtn.addEventListener('click', () => {
+                clearInterval(autoStabilityInterval);
+                Object.assign(state, { main: false, forward: false, top: false, bottom: false, auto: false });
+                autoBtn.classList.remove('active');
+                autoBtn.disabled = false;
+                thrusterBtns.forEach(btn => btn.disabled = false);
+                updateAllSystems("Idle");
+            });
+        });
+    </script>
+</body>
+</html>
+

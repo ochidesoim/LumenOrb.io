@@ -1,0 +1,696 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LumenOrb Shield: Immersive 3D Analysis</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script async src="https://unpkg.com/es-module-shims@1.6.3/dist/es-module-shims.js"></script>
+    <script type="importmap">
+    {
+        "imports": {
+            "three": "https://cdn.jsdelivr.net/npm/three@0.157.0/build/three.module.js",
+            "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.157.0/examples/jsm/"
+        }
+    }
+    </script>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Inter:wght@400;500;600&family=Syne:wght@700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --glow-color: #00aaff;
+            --saffron: #FF9933;
+            --indigo: #0a192f;
+        }
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #000000;
+            color: #E6F7FF;
+            overflow-x: hidden;
+            overflow-y: auto;
+        }
+        #bg-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+        }
+        .glass-panel {
+            background: rgba(13, 22, 38, 0.75);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(0, 170, 255, 0.2);
+            border-radius: 1rem;
+            box-shadow: 0 0 25px rgba(0, 170, 255, 0.1), inset 0 0 10px rgba(0, 170, 255, 0.1);
+        }
+        .header-title {
+            font-family: 'Orbitron', sans-serif;
+            font-weight: 700;
+            text-shadow: 0 0 10px var(--glow-color), 0 0 20px var(--glow-color);
+        }
+        .font-display {
+            font-family: 'Syne', sans-serif;
+            font-weight: 800;
+        }
+        .text-saffron { color: var(--saffron); }
+        .control-slider::-webkit-slider-thumb {
+            -webkit-appearance: none; appearance: none;
+            width: 20px; height: 20px;
+            background: #ffffff;
+            cursor: pointer; border-radius: 50%;
+            border: 3px solid var(--glow-color);
+            box-shadow: 0 0 10px var(--glow-color);
+            transition: transform 0.2s ease;
+        }
+        .control-slider:hover::-webkit-slider-thumb {
+            transform: scale(1.1);
+        }
+        .control-slider::-webkit-slider-runnable-track {
+            background: rgba(0, 170, 255, 0.2);
+        }
+        .readout-card {
+            transition: all 0.3s ease;
+            background: rgba(0, 170, 255, 0.05);
+            border: 1px solid rgba(0, 170, 255, 0.1);
+        }
+        .gauge-bar {
+            transition: width 0.5s ease-in-out;
+            box-shadow: 0 0 10px var(--glow-color);
+        }
+        .material-btn {
+            transition: all 0.2s ease;
+            background-color: rgba(0, 170, 255, 0.1);
+            border: 1px solid rgba(0, 170, 255, 0.3);
+        }
+        .material-btn.active {
+            background-color: var(--glow-color);
+            color: #000;
+            border-color: var(--glow-color);
+            box-shadow: 0 0 15px var(--glow-color);
+        }
+        #shielding-3d-container, #orbit-map-container {
+            border-radius: 0.5rem;
+            background: radial-gradient(circle, rgba(13, 22, 38, 0.5) 0%, rgba(0,0,0,0.8) 100%);
+            border: 1px solid rgba(0, 170, 255, 0.1);
+        }
+        .info-tooltip {
+            position: relative;
+            display: inline-block;
+        }
+        .info-tooltip .tooltip-text {
+            visibility: hidden;
+            width: 220px;
+            background-color: #0D1626;
+            color: #fff;
+            text-align: center;
+            border-radius: 6px;
+            padding: 8px;
+            position: absolute;
+            z-index: 10;
+            bottom: 125%;
+            left: 50%;
+            margin-left: -110px;
+            opacity: 0;
+            transition: opacity 0.3s;
+            border: 1px solid rgba(0, 170, 255, 0.3);
+            font-size: 0.875rem;
+        }
+        .info-tooltip:hover .tooltip-text {
+            visibility: visible;
+            opacity: 1;
+        }
+    </style>
+</head>
+<body class="p-4 sm:p-6 lg:p-8">
+    <canvas id="bg-canvas"></canvas>
+
+    <header class="py-6 px-8 mb-6">
+        <div class="max-w-screen-2xl mx-auto flex justify-between items-center">
+            <a href="index.html" class="font-display text-3xl text-saffron">LumenOrb</a>
+            <a href="page2.html" class="bg-saffron/20 border border-saffron text-saffron font-semibold py-2 px-6 rounded-lg hover:bg-saffron hover:text-indigo transition-all">
+                &larr; Back to Mission
+            </a>
+        </div>
+    </header>
+
+    <div class="max-w-screen-2xl mx-auto">
+        <div class="text-center mb-6">
+            <h1 class="text-4xl sm:text-5xl lg:text-6xl header-title text-white">LumenOrb Shield</h1>
+            <p class="text-lg sm:text-xl text-cyan-200 mt-2 tracking-wider">Immersive 3D Radiation Analysis</p>
+        </div>
+
+        <main class="grid grid-cols-1 xl:grid-cols-12 gap-6">
+            
+            <!-- Left Column: Controls & Orbit -->
+            <section class="xl:col-span-3 space-y-6">
+                <div class="glass-panel p-6">
+                    <h2 class="text-2xl font-bold text-white mb-4 border-b-2 border-cyan-500/30 pb-2 header-title">MISSION CONTROL</h2>
+                    <div>
+                        <label for="altitude" class="flex justify-between items-center text-lg font-medium">
+                            <span>Orbit Altitude</span>
+                             <div class="info-tooltip">
+                                 <span id="altitude-value" class="font-bold text-cyan-300">420 km</span>
+                                 <span class="tooltip-text">Higher altitudes generally increase exposure to trapped radiation belts.</span>
+                             </div>
+                        </label>
+                        <input type="range" id="altitude" min="300" max="800" value="420" class="w-full h-2 rounded-lg appearance-none cursor-pointer control-slider mt-2">
+                    </div>
+                    <div class="mt-6">
+                        <label for="inclination" class="flex justify-between items-center text-lg font-medium">
+                            <span>Inclination</span>
+                            <div class="info-tooltip">
+                                 <span id="inclination-value" class="font-bold text-cyan-300">51.6°</span>
+                                 <span class="tooltip-text">Inclination affects passages through the South Atlantic Anomaly and polar regions.</span>
+                             </div>
+                        </label>
+                        <input type="range" id="inclination" min="0" max="98" value="51.6" step="0.1" class="w-full h-2 rounded-lg appearance-none cursor-pointer control-slider mt-2">
+                    </div>
+                    <div class="mt-6">
+                        <label for="shielding" class="flex justify-between items-center text-lg font-medium">
+                            <span>Shielding Budget</span>
+                            <div class="info-tooltip">
+                                 <span id="shielding-value" class="font-bold text-cyan-300">5.0 g/cm²</span>
+                                 <span class="tooltip-text">Areal density (mass per unit area) of dedicated shielding material.</span>
+                             </div>
+                        </label>
+                        <input type="range" id="shielding" min="1" max="20" value="5" class="w-full h-2 rounded-lg appearance-none cursor-pointer control-slider mt-2">
+                    </div>
+                     <div class="mt-6">
+                        <label class="text-lg font-medium">Baseline Hull Material</label>
+                        <div id="material-selector" class="grid grid-cols-3 gap-2 mt-2">
+                            <button class="material-btn p-2 rounded-md font-semibold active" data-material="Al">Aluminium</button>
+                            <button class="material-btn p-2 rounded-md font-semibold" data-material="Ti">Titanium</button>
+                            <button class="material-btn p-2 rounded-md font-semibold" data-material="Comp">Composite</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="glass-panel p-6">
+                    <h2 class="text-xl font-bold text-white mb-3 header-title">ORBITAL TRACK</h2>
+                    <div id="orbit-map-container" class="w-full aspect-video rounded-lg relative overflow-hidden">
+                        <canvas id="orbit-canvas" class="absolute inset-0"></canvas>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Center Column: 3D Visualization -->
+            <section class="xl:col-span-6 glass-panel p-6 flex flex-col">
+                <h2 class="text-2xl font-bold text-white mb-4 border-b-2 border-cyan-500/30 pb-2 header-title">SHIELDING CONFIGURATION (3D VIEW)</h2>
+                <div id="shielding-3d-container" class="flex-grow w-full h-64 xl:h-auto min-h-0 relative">
+                    <div id="legend" class="absolute top-2 left-2 text-sm space-y-1"></div>
+                </div>
+            </section>
+            
+            <!-- Right Column: Dose Readouts -->
+            <section class="xl:col-span-3 glass-panel p-6">
+                <h2 class="text-2xl font-bold text-white mb-4 border-b-2 border-cyan-500/30 pb-2 header-title">DOSE ANALYSIS</h2>
+                <div class="space-y-6">
+                    <div class="grid grid-cols-2 gap-4">
+                        <div class="readout-card p-4 rounded-lg text-center">
+                            <p class="text-md text-cyan-200">Daily Dose</p>
+                            <p id="daily-dose" class="text-3xl font-bold text-cyan-300">0.75 mSv</p>
+                        </div>
+                        <div class="readout-card p-4 rounded-lg text-center">
+                            <p class="text-md text-amber-200">SPE Storm Dose</p>
+                            <p id="spe-dose" class="text-3xl font-bold text-amber-300">40 mSv</p>
+                        </div>
+                    </div>
+                    <div class="space-y-4">
+                        <div>
+                            <label class="flex justify-between items-baseline text-lg">
+                                <span>180-Day Mission</span>
+                                <div>
+                                    <span id="mission-dose" class="font-bold text-white">135</span>
+                                    <span class="text-gray-400">/ 600 mSv</span>
+                                </div>
+                            </label>
+                            <div class="w-full bg-cyan-900/50 rounded-full h-4 mt-1">
+                                <div id="career-gauge" class="bg-gradient-to-r from-cyan-500 to-cyan-300 h-4 rounded-full gauge-bar" style="width: 22.5%;"></div>
+                            </div>
+                        </div>
+                        <div>
+                            <label class="flex justify-between items-baseline text-lg">
+                                <span>SPE Event Limit</span>
+                                <div>
+                                    <span id="spe-dose-gauge-val" class="font-bold text-white">40</span>
+                                    <span class="text-gray-400">/ 250 mSv</span>
+                                </div>
+                            </label>
+                            <div class="w-full bg-amber-900/50 rounded-full h-4 mt-1">
+                                <div id="spe-gauge" class="bg-gradient-to-r from-amber-500 to-amber-300 h-4 rounded-full gauge-bar" style="width: 16%;"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                 <div class="mt-8">
+                    <h3 class="text-xl font-bold text-white mb-3 header-title">AI CO-PILOT</h3>
+                    <div id="ai-container" class="bg-black/20 p-4 rounded-lg min-h-[220px] flex flex-col justify-between border border-cyan-500/20">
+                        <div id="ai-response" class="text-cyan-200 text-sm font-mono leading-relaxed">
+                            <p>Awaiting analysis... Click the button below to get an expert summary of your current mission profile.</p>
+                        </div>
+                        <button id="ai-advisor-btn" class="mt-4 w-full bg-cyan-500 hover:bg-cyan-400 text-black font-bold py-2 px-4 rounded-lg transition duration-300 ease-in-out transform hover:scale-105 flex items-center justify-center space-x-2 shadow-lg shadow-cyan-500/20">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                <path d="M7 3a1 1 0 000 2h6a1 1 0 100-2H7zM4 7a1 1 0 011-1h10a1 1 0 110 2H5a1 1 0 01-1-1zM2 11a2 2 0 012-2h12a2 2 0 012 2v3a2 2 0 01-2 2H4a2 2 0 01-2-2v-3z" />
+                            </svg>
+                            <span>Analyze Mission Profile</span>
+                        </button>
+                    </div>
+                </div>
+                 <div class="mt-8">
+                     <h3 class="text-xl font-bold text-white mb-3 header-title">THREAT SOURCES</h3>
+                     <div class="space-y-2 text-sm">
+                         <p><strong class="text-cyan-300">Trapped Belts (SAA):</strong> Protons & electrons in Earth's magnetic field, strongest over South Atlantic.</p>
+                         <p><strong class="text-cyan-300">Galactic Cosmic Rays (GCR):</strong> High-energy particles from outside the solar system. A constant background dose.</p>
+                         <p><strong class="text-amber-300">Solar Particle Events (SPE):</strong> Episodic storms of high-energy protons from the Sun. Acute risk.</p>
+                     </div>
+                 </div>
+                 <div class="mt-8">
+                    <h3 class="text-xl font-bold text-white mb-3 header-title">PROTECTION STRATEGIES</h3>
+                    <div class="space-y-3 text-sm">
+                        <p><strong class="text-cyan-300">Material Selection:</strong> Use hydrogen-rich materials like Polyethylene (PE) and water, which are more effective per unit of mass than metals at stopping GCR and SPE radiation.</p>
+                        <p><strong class="text-cyan-300">Smart Shielding:</strong> Create a designated "storm shelter" with concentrated shielding. Place dense stowage (water tanks, food supplies) around crew quarters for added protection.</p>
+                        <p><strong class="text-cyan-300">Operational Safety:</strong> Plan spacewalks (EVAs) to avoid passing through the South Atlantic Anomaly (SAA). Implement procedures for crew to shelter during Solar Particle Event alerts.</p>
+                        <p><strong class="text-cyan-300">Real-time Dosimetry:</strong> Use onboard sensors to continuously monitor radiation levels, identify hotspots within the habitat, and validate shielding models to ensure crew safety.</p>
+                    </div>
+                </div>
+            </section>
+
+        </main>
+    </div>
+
+    <script type="module">
+        import * as THREE from 'three';
+        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+        // --- GLOBAL STATE & DOM ELEMENTS ---
+        const ui = {
+            altitude: document.getElementById('altitude'),
+            inclination: document.getElementById('inclination'),
+            shielding: document.getElementById('shielding'),
+            altitudeValue: document.getElementById('altitude-value'),
+            inclinationValue: document.getElementById('inclination-value'),
+            shieldingValue: document.getElementById('shielding-value'),
+            materialSelector: document.getElementById('material-selector'),
+            dailyDose: document.getElementById('daily-dose'),
+            speDose: document.getElementById('spe-dose'),
+            missionDose: document.getElementById('mission-dose'),
+            speDoseGaugeVal: document.getElementById('spe-dose-gauge-val'),
+            careerGauge: document.getElementById('career-gauge'),
+            speGauge: document.getElementById('spe-gauge'),
+            legend: document.getElementById('legend'),
+            aiAdvisorBtn: document.getElementById('ai-advisor-btn'),
+            aiResponse: document.getElementById('ai-response')
+        };
+        let currentMaterial = 'Al';
+        let isAiRunning = false;
+        const materials = {
+            'Al': { density: 2.7, radiationFactor: 1.0, name: 'Aluminium', color: 0xaaaaaa },
+            'Ti': { density: 4.5, radiationFactor: 1.2, name: 'Titanium', color: 0x888899 },
+            'Comp': { density: 1.6, radiationFactor: 0.85, name: 'Composite', color: 0x666666 }
+        };
+
+        // --- 3D VISUALIZATION (THREE.JS) ---
+        const threeD = {
+            scene: new THREE.Scene(),
+            camera: null,
+            renderer: null,
+            controls: null,
+            layers: {},
+            container: document.getElementById('shielding-3d-container')
+        };
+
+        function init3D() {
+            const width = threeD.container.clientWidth;
+            const height = threeD.container.clientHeight;
+
+            threeD.camera = new THREE.PerspectiveCamera(50, width / height, 0.1, 1000);
+            threeD.camera.position.set(5, 5, 5);
+            threeD.renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
+            threeD.renderer.setSize(width, height);
+            threeD.container.appendChild(threeD.renderer.domElement);
+            
+            threeD.controls = new OrbitControls(threeD.camera, threeD.renderer.domElement);
+            threeD.controls.enableDamping = true;
+            threeD.controls.autoRotate = true;
+            threeD.controls.autoRotateSpeed = 0.5;
+            threeD.controls.enablePan = false;
+            threeD.controls.minDistance = 5;
+            threeD.controls.maxDistance = 20;
+
+            const ambient = new THREE.AmbientLight(0xffffff, 0.5);
+            threeD.scene.add(ambient);
+            const directional = new THREE.DirectionalLight(0xffffff, 1);
+            directional.position.set(5, 10, 7.5);
+            threeD.scene.add(directional);
+
+            // Create cylinder layers
+            const geometry = new THREE.CylinderGeometry(1, 1, 5, 64, 1, true);
+            
+            threeD.layers.hull = new THREE.Mesh(geometry, new THREE.MeshStandardMaterial({ color: materials.Al.color, side: THREE.DoubleSide, transparent: true, opacity: 0.8 }));
+            threeD.layers.peGeneral = new THREE.Mesh(geometry, new THREE.MeshStandardMaterial({ color: 0x00aaff, side: THREE.DoubleSide, transparent: true, opacity: 0.6 }));
+            threeD.layers.peShelter = new THREE.Mesh(geometry, new THREE.MeshStandardMaterial({ color: 0x00aaff, side: THREE.DoubleSide, transparent: true, opacity: 0.8 }));
+            threeD.layers.water = new THREE.Mesh(geometry, new THREE.MeshStandardMaterial({ color: 0x44ccff, side: THREE.DoubleSide, transparent: true, opacity: 0.4 }));
+            
+            threeD.scene.add(threeD.layers.hull, threeD.layers.peGeneral, threeD.layers.peShelter, threeD.layers.water);
+
+            const animate = () => {
+                requestAnimationFrame(animate);
+                threeD.controls.update();
+                threeD.renderer.render(threeD.scene, threeD.camera);
+            };
+            animate();
+
+            window.addEventListener('resize', () => {
+                const w = threeD.container.clientWidth;
+                const h = threeD.container.clientHeight;
+                threeD.camera.aspect = w / h;
+                threeD.camera.updateProjectionMatrix();
+                threeD.renderer.setSize(w, h);
+            });
+        }
+        
+        // --- ORBITAL MAP ---
+        const orbit = {
+            canvas: document.getElementById('orbit-canvas'),
+            ctx: null
+        };
+
+        function initOrbitMap() {
+            orbit.ctx = orbit.canvas.getContext('2d');
+            // Set initial canvas size
+            const container = orbit.canvas.parentElement;
+            if (container) {
+                orbit.canvas.width = container.clientWidth;
+                orbit.canvas.height = container.clientHeight;
+            }
+        }
+
+        function drawOrbitPath(inclination) {
+            const ctx = orbit.ctx;
+            const canvas = orbit.canvas;
+            const container = canvas.parentElement;
+
+            // Resize canvas to fit container, crucial for correct display
+            if (container && (container.clientWidth !== canvas.width || container.clientHeight !== canvas.height)) {
+                canvas.width = container.clientWidth;
+                canvas.height = container.clientHeight;
+            }
+
+            const width = canvas.width;
+            const height = canvas.height;
+
+            if (width === 0 || height === 0) return; // Don't draw if canvas has no size
+
+            ctx.clearRect(0, 0, width, height);
+
+            // Draw space background
+            const gradient = ctx.createLinearGradient(0, 0, width, height);
+            gradient.addColorStop(0, '#0a0f1a');
+            gradient.addColorStop(1, '#1a1f2a');
+            ctx.fillStyle = gradient;
+            ctx.fillRect(0, 0, width, height);
+            
+            // Draw Earth as a blue circle
+            const earthRadius = Math.min(width, height) * 0.3;
+            ctx.fillStyle = '#2a4d8e';
+            ctx.beginPath();
+            ctx.arc(width / 2, height / 2, earthRadius, 0, 2 * Math.PI);
+            ctx.fill();
+            
+            // Add Earth details
+            ctx.fillStyle = '#1e3a6a';
+            ctx.beginPath();
+            ctx.arc(width / 2 - earthRadius * 0.3, height / 2 - earthRadius * 0.2, earthRadius * 0.4, 0, 2 * Math.PI);
+            ctx.fill();
+            
+            ctx.beginPath();
+            ctx.arc(width / 2 + earthRadius * 0.2, height / 2 + earthRadius * 0.3, earthRadius * 0.3, 0, 2 * Math.PI);
+            ctx.fill();
+            
+            // Draw South Atlantic Anomaly (SAA) region
+            ctx.fillStyle = 'rgba(255, 100, 0, 0.3)';
+            ctx.beginPath();
+            ctx.ellipse(width * 0.4, height * 0.7, width * 0.15, height * 0.1, 0, 0, 2 * Math.PI);
+            ctx.fill();
+            
+            // Draw orbital path
+            ctx.strokeStyle = '#00aaff';
+            ctx.lineWidth = 3;
+            ctx.shadowColor = '#00aaff';
+            ctx.shadowBlur = 15;
+            
+            ctx.beginPath();
+            const orbitRadius = earthRadius * 1.4;
+            const amplitude = (inclination / 90.0) * (orbitRadius * 0.8);
+            
+            for (let angle = 0; angle <= 2 * Math.PI; angle += 0.01) {
+                const x = width / 2 + orbitRadius * Math.cos(angle);
+                const y = height / 2 + Math.sin(angle) * amplitude;
+                
+                if (angle === 0) {
+                    ctx.moveTo(x, y);
+                } else {
+                    ctx.lineTo(x, y);
+                }
+            }
+            
+            ctx.stroke();
+            ctx.shadowBlur = 0;
+            
+            // Draw satellite marker
+            ctx.fillStyle = '#ffffff';
+            ctx.shadowColor = '#00aaff';
+            ctx.shadowBlur = 10;
+            ctx.beginPath();
+            ctx.arc(width / 2 + orbitRadius, height / 2, 5, 0, 2 * Math.PI);
+            ctx.fill();
+            ctx.shadowBlur = 0;
+            
+            // Add labels
+            ctx.fillStyle = '#ffffff';
+            ctx.font = '12px Inter, sans-serif';
+            ctx.textAlign = 'center';
+            ctx.fillText('Earth', width / 2, height / 2 - earthRadius - 10);
+            ctx.fillText('SAA', width * 0.4, height * 0.7 - height * 0.1 - 5);
+            ctx.fillText('Satellite', width / 2 + orbitRadius, height / 2 - 15);
+        }
+
+
+        // --- BACKGROUND STARS ---
+        function initBgStars() {
+            const canvas = document.getElementById('bg-canvas');
+            const ctx = canvas.getContext('2d');
+            let stars = [];
+            
+            function resize() {
+                canvas.width = window.innerWidth;
+                canvas.height = window.innerHeight;
+                stars = [];
+                for(let i=0; i<500; i++) {
+                    stars.push({
+                        x: Math.random() * canvas.width,
+                        y: Math.random() * canvas.height,
+                        radius: Math.random() * 1.2,
+                        alpha: Math.random()
+                    });
+                }
+            }
+
+            function animateBg() {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
+                stars.forEach(star => {
+                    star.y -= 0.1;
+                    if(star.y < 0) {
+                        star.y = canvas.height;
+                        star.x = Math.random() * canvas.width;
+                    }
+                    ctx.globalAlpha = star.alpha;
+                    ctx.beginPath();
+                    ctx.arc(star.x, star.y, star.radius, 0, 2 * Math.PI);
+                    ctx.fill();
+                });
+                requestAnimationFrame(animateBg);
+            }
+            resize();
+            animateBg();
+            window.addEventListener('resize', resize);
+        }
+
+        // --- MAIN CALCULATION LOGIC ---
+        function calculateAndDraw() {
+            const altitude = parseFloat(ui.altitude.value);
+            const inclination = parseFloat(ui.inclination.value);
+            const shieldingBudget = parseFloat(ui.shielding.value);
+            const hullMaterial = materials[currentMaterial];
+            const hullThicknessCM = 0.3;
+
+            // 1. Shielding calculations
+            const hullArealDensity = hullMaterial.density * hullThicknessCM;
+            const generalPeShielding = shieldingBudget * 0.3;
+            const shelterPeShielding = shieldingBudget * 0.7;
+            const waterStowageShielding = 7.0;
+
+            const generalTotalShielding = hullArealDensity + generalPeShielding;
+            const shelterTotalShielding = hullArealDensity + shelterPeShielding + waterStowageShielding;
+
+            // 2. Dose calculations (simplified model)
+            const altitudeFactor = Math.pow(altitude / 400, 2);
+            const inclinationFactor = 1 + (inclination / 90) * 0.5;
+            const baseDailyDose = 0.2 * altitudeFactor * inclinationFactor;
+            
+            const generalEffectiveness = (hullArealDensity * hullMaterial.radiationFactor) + (generalPeShielding * 0.7);
+            const shelterEffectiveness = (hullArealDensity * hullMaterial.radiationFactor) + (shelterPeShielding * 0.7) + (waterStowageShielding * 0.65);
+            
+            const dailyDose = baseDailyDose * (20 / (1 + generalEffectiveness));
+            const speDose = 800 * (10 / (1 + shelterEffectiveness));
+            const missionDose = dailyDose * 180;
+            const careerPercent = (missionDose / 600) * 100;
+            const spePercent = (speDose / 250) * 100;
+
+            // 3. Update UI
+            ui.altitudeValue.textContent = `${Math.round(altitude)} km`;
+            ui.inclinationValue.textContent = `${inclination.toFixed(1)}°`;
+            ui.shieldingValue.textContent = `${shieldingBudget.toFixed(1)} g/cm²`;
+            ui.dailyDose.textContent = dailyDose.toFixed(2);
+            ui.speDose.textContent = Math.round(speDose);
+            ui.missionDose.textContent = Math.round(missionDose);
+            ui.speDoseGaugeVal.textContent = Math.round(speDose);
+            ui.careerGauge.style.width = `${Math.min(careerPercent, 100)}%`;
+            ui.speGauge.style.width = `${Math.min(spePercent, 100)}%`;
+
+            // 4. Update 3D model
+            const baseRadius = 1.5;
+            const scaleFactor = 0.1; // visual scaling for thickness
+            
+            const hullRadius = baseRadius + (hullArealDensity * scaleFactor) / 2;
+            const generalPeRadius = hullRadius + (hullArealDensity * scaleFactor) / 2 + (generalPeShielding * scaleFactor) / 2;
+            const shelterPeRadius = hullRadius + (hullArealDensity * scaleFactor) / 2 + (shelterPeShielding * scaleFactor) / 2;
+            const waterRadius = shelterPeRadius + (shelterPeShielding * scaleFactor) / 2 + (waterStowageShielding * scaleFactor) / 2;
+
+            threeD.layers.hull.scale.set(hullRadius, 1, hullRadius);
+            threeD.layers.peGeneral.scale.set(generalPeRadius, 1, generalPeRadius);
+            threeD.layers.peShelter.scale.set(shelterPeRadius, 1, shelterPeRadius);
+            threeD.layers.water.scale.set(waterRadius, 1, waterRadius);
+
+            // Hide/show layers based on context (simplified for one view)
+            threeD.layers.peGeneral.visible = false; // We only show the stronger shelter config
+            threeD.layers.hull.material.color.setHex(hullMaterial.color);
+
+            // 5. Update Legend
+            ui.legend.innerHTML = `
+                <div class="flex items-center"><div class="w-3 h-3 rounded-full mr-2" style="background-color: #${threeD.layers.water.material.color.getHexString()};"></div>Water (${waterStowageShielding.toFixed(2)} g/cm²)</div>
+                <div class="flex items-center"><div class="w-3 h-3 rounded-full mr-2" style="background-color: #${threeD.layers.peShelter.material.color.getHexString()};"></div>Polyethylene (${shelterPeShielding.toFixed(2)} g/cm²)</div>
+                <div class="flex items-center"><div class="w-3 h-3 rounded-full mr-2" style="background-color: #${threeD.layers.hull.material.color.getHexString()};"></div>${hullMaterial.name} (${hullArealDensity.toFixed(2)} g/cm²)</div>
+            `;
+            
+            // 6. Update Orbit Map
+            drawOrbitPath(inclination);
+        }
+
+        // --- GEMINI API INTEGRATION ---
+        function typeWriter(element, text, speed = 20) {
+            return new Promise((resolve) => {
+                let i = 0;
+                element.innerHTML = '';
+                function typing() {
+                    if (i < text.length) {
+                        element.innerHTML += text.charAt(i);
+                        i++;
+                        setTimeout(typing, speed);
+                    } else {
+                        const cursor = element.querySelector('.typing-cursor');
+                        if (cursor) cursor.remove();
+                        resolve();
+                    }
+                }
+                typing();
+            });
+        }
+
+        async function getAiSummary() {
+            if (isAiRunning) return;
+            isAiRunning = true;
+            ui.aiAdvisorBtn.disabled = true;
+            ui.aiAdvisorBtn.classList.add('opacity-50', 'cursor-not-allowed');
+
+            ui.aiResponse.innerHTML = '<div class="flex items-center"><div class="animate-spin rounded-full h-5 w-5 border-b-2 border-cyan-300 mr-3"></div><span>Analyzing...</span></div>';
+
+            const systemPrompt = `You are a space mission radiation safety analyst, an AI co-pilot. Your role is to interpret radiation dose data for a Low Earth Orbit (LEO) mission and provide a concise, conversational summary for the mission planner. Combine your analysis and recommendation into a single, natural-language paragraph. Do not use labels like 'STATUS', 'ANALYSIS', or 'RECOMMENDATION'. Just provide the text summary directly.`;
+
+            const userQuery = `
+            Mission Parameters:
+            - Orbit: ${ui.altitude.value} km, ${ui.inclination.value}°
+            - Hull: ${materials[currentMaterial].name}
+            - Shielding Budget: ${ui.shielding.value} g/cm²
+            Dose Estimations:
+            - Daily Dose: ${ui.dailyDose.textContent} mSv
+            - SPE Dose: ${ui.speDose.textContent} mSv
+            - 180-day Mission Dose: ${ui.missionDose.textContent} mSv
+            Please provide your analysis.`;
+
+            const apiKey = "";
+            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${apiKey}`;
+
+            const payload = { contents: [{ parts: [{ text: userQuery }] }], systemInstruction: { parts: [{ text: systemPrompt }] } };
+
+            try {
+                const response = await fetch(apiUrl, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+                if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+                const result = await response.json();
+                const text = result.candidates?.[0]?.content?.parts?.[0]?.text;
+                
+                if (text) {
+                    const formattedResponse = text.replace(/\n/g, '<br>');
+                    await typeWriter(ui.aiResponse, formattedResponse);
+
+                } else {
+                     ui.aiResponse.textContent = 'No response from advisor. Please try again.';
+                }
+
+            } catch (error) {
+                console.error("Error fetching AI summary:", error);
+                ui.aiResponse.textContent = 'Failed to retrieve analysis. Check console for errors.';
+            } finally {
+                isAiRunning = false;
+                ui.aiAdvisorBtn.disabled = false;
+                ui.aiAdvisorBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+            }
+        }
+        
+        // --- EVENT LISTENERS ---
+        ui.altitude.addEventListener('input', calculateAndDraw);
+        ui.inclination.addEventListener('input', calculateAndDraw);
+        ui.shielding.addEventListener('input', calculateAndDraw);
+        ui.materialSelector.addEventListener('click', (e) => {
+            if (e.target.tagName === 'BUTTON') {
+                ui.materialSelector.querySelectorAll('button').forEach(btn => btn.classList.remove('active'));
+                e.target.classList.add('active');
+                currentMaterial = e.target.dataset.material;
+                calculateAndDraw();
+            }
+        });
+        ui.aiAdvisorBtn.addEventListener('click', getAiSummary);
+
+        // --- INITIALIZATION ---
+        window.addEventListener('load', () => {
+            init3D();
+            initOrbitMap();
+            initBgStars();
+            // Call calculateAndDraw after a small delay to ensure canvas is ready
+            setTimeout(calculateAndDraw, 100);
+        });
+
+        // Also handle window resize for orbit canvas
+        window.addEventListener('resize', () => {
+            const container = orbit.canvas.parentElement;
+            if (container) {
+                orbit.canvas.width = container.clientWidth;
+                orbit.canvas.height = container.clientHeight;
+                calculateAndDraw();
+            }
+        });
+    </script>
+</body>
+</html>
+

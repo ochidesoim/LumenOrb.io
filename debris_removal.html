@@ -1,0 +1,540 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chakravyu Initiative | Project LEO</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&family=Syne:wght@700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --saffron: #FF9933;
+            --indigo: #0a192f;
+        }
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #0A192F;
+            color: #CCD6F6;
+            background-image: url('https://www.transparenttextures.com/patterns/stardust.png');
+        }
+        .font-display {
+            font-family: 'Syne', sans-serif;
+            font-weight: 800;
+        }
+        .text-saffron { color: var(--saffron); }
+        .space-canvas {
+            background-image: radial-gradient(circle, #172A45 1px, transparent 1px);
+            background-size: 20px 20px;
+            position: relative;
+            overflow: hidden;
+        }
+        .celestial-object {
+            position: absolute;
+            transform-origin: center;
+            transition: all 1.5s ease-in-out;
+        }
+        .celestial-object:focus {
+            outline: 2px solid #64FFDA;
+            border-radius: 50%;
+        }
+        .debris-particle {
+            position: absolute;
+            width: 2px;
+            height: 2px;
+            background-color: rgba(204, 214, 246, 0.4);
+            border-radius: 50%;
+            pointer-events: none;
+        }
+        .janitor-arm {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 50px;
+            height: 2px;
+            background-color: #64FFDA;
+            transform-origin: 0% 50%;
+            transform: translateY(-50%) rotate(45deg);
+            transition: all 0.5s ease-in-out;
+            opacity: 0;
+            z-index: 20;
+        }
+        .avatar {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background-color: #2d557a;
+            border: 2px solid #64FFDA;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+        }
+
+        /* Re-entry Animation */
+        #reentry-overlay {
+            background-image: url('https://copilot.microsoft.com/th/id/BCO.160f8886-b792-4f4f-b1f4-8886e3afca54.png');
+            background-size: cover;
+            background-position: center;
+        }
+        #reentry-earth {
+            width: 150%;
+            height: 500px;
+            background: radial-gradient(circle at 50% 0%, #87CEEB, #00008B);
+            border-top: 10px solid rgba(135, 206, 235, 0.5);
+            opacity: 0; /* Hide the simple Earth div */
+        }
+        .animate-reentry {
+            animation: reentry-path 5s ease-in forwards;
+        }
+        @keyframes reentry-path {
+            0% { top: 10%; left: 0%; opacity: 1; transform: scale(1.2); }
+            20% { background-color: #FFD700; }
+            50% { background-color: #FF4500; }
+            90% { opacity: 1; }
+            100% { top: 70%; left: 100%; opacity: 0; transform: scale(0.2); background-color: #FFFFFF; }
+        }
+
+        /* Animations */
+        @keyframes rotate-orbit {
+            from { transform: translate(-50%, -50%) rotate(0deg); }
+            to { transform: translate(-50%, -50%) rotate(360deg); }
+        }
+         @keyframes rotate-earth {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+        .animate-orbit-fast {
+            animation: rotate-orbit 60s linear infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); box-shadow: 0 0 10px rgba(100, 255, 218, 0.5); }
+            50% { transform: scale(1.1); box-shadow: 0 0 20px rgba(100, 255, 218, 0.8); }
+        }
+        .pulse-target {
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .fade-in {
+            animation: fadeIn 1s ease-in-out forwards;
+        }
+
+        .targetable-debris:hover {
+            filter: drop-shadow(0 0 8px #64FFDA);
+            cursor: pointer;
+        }
+
+    </style>
+</head>
+<body class="antialiased">
+    <header class="py-6 px-8">
+        <div class="max-w-7xl mx-auto flex justify-between items-center">
+            <a href="index.html" class="font-display text-3xl text-saffron">LumenOrb</a>
+            <a href="page2.html" class="bg-saffron/20 border border-saffron text-saffron font-semibold py-2 px-6 rounded-lg hover:bg-saffron hover:text-indigo transition-all">
+                &larr; Back to Mission
+            </a>
+        </div>
+    </header>
+
+<main class="flex flex-col items-center justify-center min-h-screen p-4 overflow-hidden">
+
+    <div id="intro-screen" class="text-center fade-in">
+        <div class="w-64 h-64 mx-auto mb-8 rounded-full border-4 border-slate-700 p-2 bg-slate-800 shadow-2xl">
+            <img src="https://www.freeiconspng.com/thumbs/earth-png/world-png-9.png" alt="Planet Earth" class="w-full h-full object-cover rounded-full">
+        </div>
+        <h1 class="text-4xl md:text-6xl font-black text-white mb-4">The Orbital Janitor</h1>
+        <p class="text-lg md:text-xl text-slate-400 max-w-3xl mx-auto mb-6">Our orbital highways are getting crowded. This is a demonstration of how we can start cleaning them up to protect our future in space. Your mission is about to begin.</p>
+        <p class="text-sm text-slate-500 max-w-2xl mx-auto mb-8">Please Note: This simulation contains over 350 debris particles, representing 1/100th of the 35,000+ large objects currently tracked in orbit.</p>
+        <button id="start-demo-btn" class="bg-[#64FFDA] text-[#0A192F] font-bold py-3 px-8 rounded-lg text-lg hover:bg-white transition-colors shadow-lg shadow-[#64FFDA]/20">
+            Take Command
+        </button>
+    </div>
+	
+
+    <div id="demo-screen" class="hidden w-full max-w-7xl">
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <!-- Space Canvas -->
+            <div id="space-canvas" class="lg:col-span-2 h-[60vh] lg:h-[80vh] w-full bg-[#0d203d] rounded-xl border border-slate-700 space-canvas flex items-center justify-center">
+                
+                <!-- Layer 1: Earth (Background) -->
+                <div class="w-48 h-48 md:w-64 md:h-64 rounded-full shadow-2xl relative z-10 flex items-center justify-center" style="background-image: url('https://www.freeiconspng.com/thumbs/earth-png/world-png-9.png'); background-size: contain; background-position: center; background-repeat: no-repeat;">
+                </div>
+                
+                <!-- Layer 2: Small Debris Field -->
+                <div id="debris-field-container" class="absolute top-0 left-0 w-full h-full z-20"></div>
+
+                <!-- Layer 3: Interactive Targets and Janitor -->
+                <div id="orbit-container" class="absolute top-1/2 left-1/2 w-full h-[calc(100%-40px)] z-30 animate-orbit-fast">
+                    <!-- TARGETS - WILL BE ADDED DYNAMICALLY -->
+                    <div id="janitor" class="celestial-object">
+                        <div class="relative text-center">
+                            <div class="relative w-6 h-6 bg-cyan-400 rounded-full border-2 border-white shadow-lg mx-auto">
+                                  <div id="janitor-arm-element" class="janitor-arm"></div>
+                            </div>
+                            <div class="mt-1 text-[10px] text-cyan-300 whitespace-nowrap">Orbital Janitor</div>
+                        </div>
+                        <div id="deorbit-kit" class="absolute top-0 left-0 w-3 h-3 bg-yellow-400 rounded-sm hidden"></div>
+                        <div id="drag-sail" class="absolute top-1/2 left-1/2 w-0 h-0 bg-slate-400/50 backdrop-blur-sm transition-all duration-1000 origin-center"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Control Panel -->
+            <div id="control-panel" class="bg-[#172A45] p-6 rounded-xl border border-slate-700 flex flex-col justify-between h-full">
+                <div>
+                    <div class="flex items-center mb-4">
+                        <div class="avatar mr-4">🧑‍🚀</div>
+                        <div>
+                            <h2 id="step-title" class="text-2xl font-bold text-white">Your Command Console</h2>
+                        </div>
+                    </div>
+                    <p id="step-instruction" class="text-slate-400 mb-6">Welcome, Commander. Let's make space safe again.</p>
+                </div>
+                
+                <div id="mission-data" class="bg-[#0A192F] p-4 rounded-md mb-6 hidden">
+                    <h3 class="font-bold text-white">Target Intel:</h3>
+                    <p class="text-sm text-slate-300">**Designation:** <span id="data-name"></span></p>
+                    <p class="text-sm text-slate-300">**Threat Level:** <span id="data-risk"></span></p>
+                    <p class="text-sm text-slate-300">**Story:** <span id="data-story"></span></p>
+                </div>
+
+                <div id="controls" class="mt-auto space-y-4"></div>
+                <button id="reset-btn" class="w-full mt-4 bg-red-500/80 text-white font-bold py-2 px-4 rounded-lg hover:bg-red-500 transition-colors hidden">
+                    Reset Simulation
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Re-entry Overlay -->
+    <div id="reentry-overlay" class="hidden fixed top-0 left-0 w-full h-full z-50 flex flex-col items-center justify-between overflow-hidden">
+        <div id="reentry-progress-view" class="text-center pt-12 z-10">
+            <h2 class="text-4xl font-black text-white">Controlled Re-entry</h2>
+            <p class="text-lg text-slate-300">Target is vaporizing in the upper atmosphere...</p>
+        </div>
+        
+        <div id="mission-complete-view" class="hidden text-center z-10 m-auto p-4">
+            <h2 class="text-5xl font-black text-white mb-4">Mission Completed</h2>
+            <p class="text-xl text-slate-300 mb-8">Target successfully de-orbited. Excellent work, Commander.</p>
+            
+            <div id="reentry-info-panel" class="w-full max-w-4xl mx-auto mb-8 text-center z-10 fade-in">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-white">
+                    <div class="bg-black/40 backdrop-blur-sm p-4 rounded-lg">
+                        <h3 class="font-bold text-cyan-300 mb-1">THE LAYER</h3>
+                        <p class="text-sm">Vaporized in the <span class="font-bold">Thermosphere</span> at over 17,500 mph.</p>
+                    </div>
+                    <div class="bg-black/40 backdrop-blur-sm p-4 rounded-lg">
+                        <h3 class="font-bold text-cyan-300 mb-1">THE PROCESS</h3>
+                        <p class="text-sm">Extreme air compression created a plasma sheath, ensuring safe disintegration.</p>
+                    </div>
+                    <div class="bg-black/40 backdrop-blur-sm p-4 rounded-lg">
+                        <h3 class="font-bold text-cyan-300 mb-1">THE LOCATION</h3>
+                        <p class="text-sm">Targeted over the <span class="font-bold">Spacecraft Cemetery</span> in the South Pacific Ocean.</p>
+                    </div>
+                </div>
+            </div>
+
+            <button id="next-mission-btn" class="bg-[#64FFDA] text-[#0A192F] font-bold py-3 px-8 rounded-lg text-lg hover:bg-white transition-colors">Go to Next Mission</button>
+        </div>
+
+        <div id="reentry-debris" class="absolute w-12 h-12 flex items-center justify-center text-4xl rounded-full shadow-2xl shadow-orange-500/50 bg-yellow-300"></div>
+    </div>
+</main>
+<script>
+    const startDemoBtn = document.getElementById('start-demo-btn');
+    const resetBtn = document.getElementById('reset-btn');
+    const nextMissionBtn = document.getElementById('next-mission-btn');
+    
+    const introScreen = document.getElementById('intro-screen');
+    const demoScreen = document.getElementById('demo-screen');
+    const spaceCanvas = document.getElementById('space-canvas');
+    
+    const reentryOverlay = document.getElementById('reentry-overlay');
+    const reentryProgressView = document.getElementById('reentry-progress-view');
+    const missionCompleteView = document.getElementById('mission-complete-view');
+    const reentryDebris = document.getElementById('reentry-debris');
+
+    const debrisFieldContainer = document.getElementById('debris-field-container');
+    const orbitContainer = document.getElementById('orbit-container');
+    const janitor = document.getElementById('janitor');
+    const janitorArm = document.getElementById('janitor-arm-element');
+    const deorbitKit = document.getElementById('deorbit-kit');
+    const dragSail = document.getElementById('drag-sail');
+    
+    let allDebris = [];
+
+    const controlPanel = {
+        title: document.getElementById('step-title'),
+        instruction: document.getElementById('step-instruction'),
+        controls: document.getElementById('controls'),
+        missionData: document.getElementById('mission-data'),
+        dataName: document.getElementById('data-name'),
+        dataRisk: document.getElementById('data-risk'),
+        dataStory: document.getElementById('data-story'),
+    };
+
+    let state = {
+        currentStep: 0,
+        selectedTarget: null,
+    };
+    
+    const missionSteps = [
+        { title: "Mission Assignment", instruction: "Commander, the board has identified several high-priority threats. Please select a target for removal.", action: setupTargetSelection },
+        { title: "Beginning Rendezvous", instruction: "Excellent choice, Commander. The Janitor is en route. Its ion thrusters are efficient but gentle, making the journey smooth and precise.", action: setupRendezvous },
+        { title: "Ready to Attach", instruction: "We have arrived. The Janitor has matched the target's rotation perfectly. On your command, we'll attach the de-orbit kit.", action: setupAttachKit },
+        { title: "Deploying the Sail", instruction: "Attachment confirmed! The Janitor is moving to a safe distance. Give the command to deploy the drag sail.", action: setupDeploySail },
+        { title: "De-Orbit in Progress", instruction: "Look at that beautiful deployment! The sail is catching the upper atmosphere. Initiating final re-entry sequence.", action: setupDecay },
+        { title: "Target Neutralized!", instruction: "A job well done, Commander. You've just made LEO a little bit safer. The Janitor is already calculating its trajectory to the next target.", action: setupConclusion }
+    ];
+
+    function updateControlPanel(step) {
+        controlPanel.title.innerText = step.title;
+        controlPanel.instruction.innerText = step.instruction;
+        controlPanel.controls.innerHTML = '';
+        step.action();
+    }
+    
+    function selectTarget(debris) {
+        state.selectedTarget = debris;
+        allDebris.forEach(d => d.classList.remove('pulse-target'));
+        state.selectedTarget.classList.add('pulse-target');
+        controlPanel.missionData.classList.remove('hidden');
+        controlPanel.dataName.innerText = debris.dataset.name;
+        controlPanel.dataRisk.innerText = debris.dataset.risk;
+        controlPanel.dataStory.innerText = debris.dataset.story;
+        
+        const confirmButton = document.createElement('button');
+        confirmButton.className = "w-full bg-[#64FFDA] text-[#0A192F] font-bold py-2 px-4 rounded-lg hover:bg-white transition-colors";
+        confirmButton.innerText = 'Lock Target & Proceed';
+        confirmButton.onclick = () => advanceMission();
+        controlPanel.controls.innerHTML = ''; // Clear old buttons
+        
+        const highestRiskBtn = document.createElement('button');
+        highestRiskBtn.className = "w-full bg-orange-800 text-white font-bold py-2 px-4 rounded-lg cursor-not-allowed";
+        highestRiskBtn.innerText = 'Highest Risk Target Selected';
+        highestRiskBtn.disabled = true;
+        controlPanel.controls.appendChild(highestRiskBtn);
+        controlPanel.controls.appendChild(confirmButton);
+    }
+
+    function setupTargetSelection() {
+        const remainingTargets = allDebris.filter(d => !d.classList.contains('mission-hidden'));
+        if (remainingTargets.length === 0) {
+            controlPanel.title.innerText = "All Targets Cleared!";
+            controlPanel.instruction.innerText = "You have successfully cleared all high-risk targets. Our orbits are safer thanks to you, Commander.";
+            return;
+        }
+
+        const highestRiskBtn = document.createElement('button');
+        highestRiskBtn.className = "w-full bg-orange-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-orange-500 transition-colors";
+        highestRiskBtn.innerText = 'Select Highest Risk Target';
+        highestRiskBtn.onclick = () => {
+            const highRiskTargets = remainingTargets.filter(d => d.dataset.risk === 'High');
+            const targetToSelect = highRiskTargets.length > 0 ? highRiskTargets[0] : remainingTargets[0];
+            selectTarget(targetToSelect);
+        };
+        controlPanel.controls.appendChild(highestRiskBtn);
+
+        remainingTargets.forEach(debris => {
+            const button = document.createElement('button');
+            button.className = "w-full bg-cyan-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-cyan-500 transition-colors";
+            button.innerText = `Select: ${debris.dataset.name}`;
+            button.onclick = () => selectTarget(debris);
+            controlPanel.controls.appendChild(button);
+        });
+    }
+
+    function setupRendezvous() {
+        janitor.style.top = state.selectedTarget.style.top;
+        janitor.style.left = state.selectedTarget.style.left;
+        setTimeout(() => advanceMission(), 2000); 
+    }
+
+    function setupAttachKit() {
+        const button = document.createElement('button');
+        button.className = "w-full bg-cyan-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-cyan-500 transition-colors";
+        button.innerText = 'Engage Robotic Arm';
+        button.onclick = () => {
+            button.disabled = true;
+            button.innerText = 'Attaching...';
+            janitorArm.style.opacity = '1';
+            janitorArm.style.width = '10px';
+            setTimeout(() => {
+                janitorArm.style.opacity = '0';
+                janitorArm.style.width = '50px';
+                deorbitKit.classList.remove('hidden');
+                janitor.style.transform = `translate(-50%, -50%) translate(40px, -40px)`;
+                advanceMission();
+            }, 2000);
+        };
+        controlPanel.controls.appendChild(button);
+    }
+
+    function setupDeploySail() {
+        const button = document.createElement('button');
+        button.className = "w-full bg-cyan-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-cyan-500 transition-colors";
+        button.innerText = 'Unfurl Drag Sail';
+        button.onclick = () => {
+            button.disabled = true;
+            button.innerText = 'Deploying...';
+            dragSail.style.width = '50px';
+            dragSail.style.height = '50px';
+            dragSail.style.transform = 'translate(-50%, -50%)';
+            setTimeout(() => advanceMission(), 2000);
+        };
+        controlPanel.controls.appendChild(button);
+    }
+    
+    function setupDecay() {
+        janitor.classList.add('hidden');
+
+        demoScreen.style.transition = 'opacity 0.5s ease-out';
+        demoScreen.style.opacity = '0';
+        setTimeout(() => {
+            demoScreen.classList.add('hidden');
+            reentryProgressView.classList.remove('hidden');
+            missionCompleteView.classList.add('hidden');
+            reentryOverlay.classList.remove('hidden');
+            reentryDebris.innerHTML = state.selectedTarget.querySelector('div').innerHTML;
+            reentryDebris.classList.add('animate-reentry');
+        }, 500);
+        setTimeout(() => advanceMission(), 5500);
+    }
+
+    function setupConclusion() {
+       reentryProgressView.classList.add('hidden');
+       missionCompleteView.classList.remove('hidden');
+    }
+
+    function advanceMission() {
+        state.currentStep++;
+        if (state.currentStep < missionSteps.length) {
+            updateControlPanel(missionSteps[state.currentStep]);
+        }
+    }
+
+    function createDebrisField() {
+        debrisFieldContainer.innerHTML = '';
+        const canvasWidth = spaceCanvas.offsetWidth;
+        const canvasHeight = spaceCanvas.offsetHeight;
+        for (let i = 0; i < 350; i++) {
+            const particle = document.createElement('div');
+            particle.className = 'debris-particle';
+            const x = Math.random() * canvasWidth;
+            const y = Math.random() * canvasHeight;
+            particle.style.left = `${x}px`;
+            particle.style.top = `${y}px`;
+            debrisFieldContainer.appendChild(particle);
+        }
+    }
+
+    function createDebrisTargets() {
+        orbitContainer.querySelectorAll('.targetable-debris').forEach(t => t.remove());
+        allDebris = [];
+        const targets = [
+            { id: 'd1', name: 'Titan II Transtage', risk: 'High', story: 'A rocket stage from the 90s, high risk of fragmentation.', icon: '🚀', top: '15%', left: '50%' },
+            { id: 'd2', name: 'AURA Weather Sat', risk: 'Medium', story: 'A retired satellite that now poses a collision risk.', icon: '🛰️', top: '65%', left: '85%' },
+            { id: 'd3', name: 'Cosmos 1408', risk: 'High', story: 'Remains from an anti-satellite test, creating thousands of fragments.', icon: '🛰️', top: '50%', left: '10%' },
+            { id: 'd4', name: 'SL-8 Rocket Body', risk: 'High', story: 'A massive, old rocket body left in a crucial orbit.', icon: '🚀', top: '80%', left: '60%' },
+            { id: 'd5', name: 'Iridium 33', risk: 'Medium', story: 'The defunct satellite involved in the 2009 collision.', icon: '🛰️', top: '20%', left: '80%' },
+            { id: 'd6', name: 'Fengyun-1C', risk: 'High', story: 'A weather satellite destroyed in a 2007 ASAT test.', icon: '🛰️', top: '90%', left: '15%' },
+            { id: 'd7', name: 'H-IIA Rocket Body', risk: 'Medium', story: 'A more recent rocket stage from a Japanese launch.', icon: '🚀', top: '30%', left: '25%' },
+            { id: 'd8', name: 'Envisat', risk: 'High', story: 'One of the largest defunct satellites, a major collision risk.', icon: '🛰️', top: '5%', left: '30%' },
+            { id: 'd9', name: 'Topex/Poseidon', risk: 'Low', story: 'An oceanography satellite that was safely decommissioned.', icon: '🛰️', top: '70%', left: '40%' },
+            { id: 'd10', name: 'Atlas V Centaur', risk: 'Medium', story: 'A modern upper stage left in a decaying orbit.', icon: '🚀', top: '40%', left: '95%' }
+        ];
+
+        targets.forEach(t => {
+            const el = document.createElement('div');
+            el.id = t.id;
+            el.className = 'celestial-object targetable-debris';
+            el.dataset.name = t.name;
+            el.dataset.risk = t.risk;
+            el.dataset.story = t.story;
+            el.style.top = t.top;
+            el.style.left = t.left;
+            el.style.transform = 'translate(-50%, -50%)';
+            el.innerHTML = `<div class="w-8 h-8 flex items-center justify-center text-2xl" aria-hidden="true">${t.icon}</div>`;
+            
+            // ACCESSIBILITY ADDITIONS
+            el.setAttribute('role', 'button');
+            el.setAttribute('tabindex', '0');
+            el.setAttribute('aria-label', `${t.name}, risk level ${t.risk}. Press Enter to select.`);
+
+            el.addEventListener('click', () => selectTarget(el));
+            el.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    selectTarget(el);
+                }
+            });
+
+            orbitContainer.insertBefore(el, janitor);
+            allDebris.push(el);
+        });
+    }
+    
+    function initializeDemo() {
+        state.currentStep = 0;
+        state.selectedTarget = null;
+
+        janitor.style.cssText = 'top: 85%; left: 25%; transform: translate(-50%, -50%);';
+        dragSail.style.cssText = '';
+        deorbitKit.classList.add('hidden');
+        
+        demoScreen.classList.remove('hidden');
+        demoScreen.classList.add('fade-in');
+        introScreen.classList.add('hidden');
+        resetBtn.classList.remove('hidden');
+
+        createDebrisTargets();
+        createDebrisField();
+        updateControlPanel(missionSteps[0]);
+    }
+
+    nextMissionBtn.addEventListener('click', () => {
+        state.currentStep = 0;
+        reentryOverlay.classList.add('hidden');
+        reentryDebris.classList.remove('animate-reentry');
+        demoScreen.style.opacity = '1';
+        demoScreen.classList.remove('hidden');
+        
+        if(state.selectedTarget) {
+            state.selectedTarget.classList.add('mission-hidden');
+            state.selectedTarget.classList.add('hidden');
+        }
+        
+        janitor.classList.remove('hidden'); // Make janitor visible again for the new mission
+        janitor.style.transition = 'all 1.5s ease-in-out';
+        janitor.style.top = '85%';
+        janitor.style.left = '25%';
+        janitor.style.transform = `translate(-50%, -50%)`;
+        
+        // BUG FIX: Also reset the drag sail
+        dragSail.style.cssText = '';
+
+        controlPanel.missionData.classList.add('hidden');
+        updateControlPanel(missionSteps[0]);
+    });
+
+    startDemoBtn.addEventListener('click', initializeDemo);
+    
+    resetBtn.addEventListener('click', () => {
+        demoScreen.classList.add('hidden');
+        reentryOverlay.classList.add('hidden');
+        reentryDebris.classList.remove('animate-reentry');
+        introScreen.classList.remove('hidden');
+        resetBtn.classList.add('hidden');
+    });
+
+</script>
+
+</body>
+</html>
+

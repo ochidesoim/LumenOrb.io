@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Surya Power Array | Project LEO</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --saffron: #FF9933;
+            --indigo: #0a192f;
+            --gold: #FFD700;
+            --off-white: #F3EFE0;
+            --cyan: #38bdf8;
+        }
+        body {
+            font-family: 'Poppins', sans-serif;
+            background-color: var(--indigo);
+            color: var(--off-white);
+            background-image: url('https://www.transparenttextures.com/patterns/stardust.png');
+        }
+        .font-display {
+            font-family: 'Syne', sans-serif;
+            font-weight: 800;
+        }
+        .text-saffron { color: var(--saffron); }
+        .text-gold { color: var(--gold); }
+        .text-cyan { color: var(--cyan); }
+
+        .ship-container {
+            position: relative;
+            width: 800px;
+            height: 500px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .ship-body {
+            position: relative;
+            flex-shrink: 0;
+            width: 96px; /* w-24 */
+            height: 192px; /* h-48 */
+            background-color: rgba(100, 116, 139, 0.5);
+            border: 2px solid var(--cyan);
+            border-radius: 0.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 10;
+        }
+        
+        .deployable-arm {
+            position: absolute;
+            top: 50%;
+            height: 10px;
+            width: 100px;
+            background-color: #475569;
+            border: 2px solid var(--cyan);
+            transition: transform 1s cubic-bezier(0.68, -0.55, 0.27, 1.55);
+        }
+        .deployable-arm.left {
+            right: 50%;
+            margin-right: 48px;
+            transform-origin: right;
+            transform: translateY(-50%) scaleX(0);
+        }
+        .deployable-arm.right {
+            left: 50%;
+            margin-left: 48px;
+            transform-origin: left;
+            transform: translateY(-50%) scaleX(0);
+        }
+        .deployed .deployable-arm {
+            transform: translateY(-50%) scaleX(1);
+        }
+
+        .array-hub {
+            position: absolute;
+            top: 50%;
+            width: 1px;
+            height: 1px;
+        }
+        .array-hub.left {
+            left: 0;
+            transform: translateY(-50%);
+        }
+        .array-hub.right {
+            right: 0;
+            transform: translateY(-50%);
+        }
+
+        .panel-petal {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 150px; 
+            height: 40px;
+            display: flex;
+            transform-origin: 0% 50%; 
+            transition: transform 1.2s cubic-bezier(0.68, -0.55, 0.27, 1.55) 0.5s; /* Delay bloom until arms are out */
+            transform: rotate(var(--angle)) translateY(-20px) scale(0);
+        }
+        
+        .deployed .panel-petal {
+            transform: rotate(var(--angle)) translateY(-20px) scale(1);
+        }
+
+        .panel-segment {
+            width: 25%;
+            height: 100%;
+            position: relative;
+            transform-style: preserve-3d;
+            transition: transform 0.8s cubic-bezier(0.68, -0.55, 0.27, 1.55);
+            transform-origin: left;
+        }
+        
+        .deployed .panel-segment:nth-child(1) { transition-delay: 1s; }
+        .deployed .panel-segment:nth-child(2) { transition-delay: 1.15s; }
+        .deployed .panel-segment:nth-child(3) { transition-delay: 1.3s; }
+        .deployed .panel-segment:nth-child(4) { transition-delay: 1.45s; }
+
+        .panel-segment:nth-child(1) { transition-delay: 0.75s; }
+        .panel-segment:nth-child(2) { transition-delay: 0.6s; }
+        .panel-segment:nth-child(3) { transition-delay: 0.45s; }
+        .panel-segment:nth-child(4) { transition-delay: 0.3s; }
+        
+        .panel-face {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            backface-visibility: hidden;
+            border: 1px solid var(--cyan);
+        }
+
+        .panel-face-front {
+            background: linear-gradient(90deg, #0f172a, #1e293b, #0f172a);
+            position: relative;
+            overflow: hidden;
+        }
+        .panel-face-front::before {
+            content: '';
+            position: absolute;
+            inset: 2px;
+            background-image:
+                linear-gradient(rgba(56, 189, 248, 0.3) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(56, 189, 248, 0.3) 1px, transparent 1px);
+            background-size: 20px 20px;
+        }
+        .panel-face-back {
+            background-color: #1e293b;
+            transform: rotateY(180deg);
+        }
+        
+        .deployed .panel-segment { transform: rotateY(-180deg); }
+
+        .control-btn:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+        }
+    </style>
+</head>
+<body class="antialiased overflow-x-hidden">
+
+    <header class="py-6 px-8">
+        <div class="max-w-7xl mx-auto flex justify-between items-center">
+            <a href="index.html" class="font-display text-3xl text-saffron">LumenOrb</a>
+            <a href="page2.html" class="bg-saffron/20 border border-saffron text-saffron font-semibold py-2 px-6 rounded-lg hover:bg-saffron hover:text-indigo transition-all">
+                &larr; Back to Mission
+            </a>
+        </div>
+    </header>
+
+    <main class="py-12 px-8">
+        <div class="max-w-7xl mx-auto">
+            <div class="text-center">
+                <h1 class="font-display text-4xl md:text-5xl text-saffron">Surya Power Array</h1>
+                <p class="mt-4 max-w-3xl mx-auto text-lg text-gray-300">
+                    The lifeblood of the LumenOrb. Our state-of-the-art photovoltaic wings harvest solar energy, powering all commercial and life-support systems. Use the buttons to manage deployment.
+                </p>
+            </div>
+
+            <div class="mt-16 grid grid-cols-1 lg:grid-cols-5 gap-8 items-center">
+                <div class="lg:col-span-3 p-8 rounded-lg flex flex-col items-center justify-center min-h-[500px]">
+                    <div id="ship-visualizer" class="ship-container">
+                        <div class="ship-body">
+                            <span class="font-display text-lg text-cyan">LumenOrb</span>
+                        </div>
+                        <div class="deployable-arm left">
+                            <div class="array-hub left">
+                                <!-- 12 Petals for a full circle -->
+                                <div class="panel-petal" style="--angle: 0deg;"><div class="panel-segment"><div class="panel-face panel-face-front"></div><div class="panel-face panel-face-back"></div></div><div class="panel-segment"><div class="panel-face panel-face-front"></div><div class="panel-face panel-face-back"></div></div><div class="panel-segment"><div class="panel-face panel-face-front"></div><div class="panel-face panel-face-back"></div></div><div class="panel-segment"><div class="panel-face panel-face-front"></div><div class="panel-face panel-face-back"></div></div></div>
+                                <div class="panel-petal" style="--angle: 30deg;"><div class="panel-segment"><div class="panel-face panel-face-front"></div><div class="panel-face panel-face-back"></div></div><div class="panel-segment"><div class="panel-face panel-face-front"></div><div class="panel-face panel-face-back"></div></div><div class="panel-segment"><div class="panel-face panel-face-front"></div><div class="panel-face panel-face-back"></div></div><div class="panel-segment"><div class="panel-face panel-face-front"></div><div class="panel-face panel-face-back"></div></div></div>
+                                <div class="panel-petal" style="--angle: 60deg;"><div class="panel-segment"><div class="panel-face panel-face-front"></div><div class="panel-face panel-face-back"></div></div><div class="panel-segment"><div class="panel-face panel-face-front"></div><div class="panel-face panel-face-back"></div></div><div class="panel-segment"><div class="panel-face panel-face-front"></div><div class="panel-face panel-face-back"></div></div><div class="panel-segment"><div class="panel-face panel-face-front"></div><div class="panel-face panel-face-back"></div></div></div>
+                                <div class="panel-petal" style="--angle: 90deg;"><div class="panel-segment"><div class="panel-face panel-face-front"></div><div class="panel-face panel-face-back"></div></div><div class="panel-segment"><div class="panel-face panel-face-front"></div><div class="panel-face panel-face-back"></div></div><div class="panel-segment"><div class="panel-face panel-face-front"></div><div class="panel-face panel-face-back"></div></div><div class="panel-segment"><div class="panel-face panel-face-front"></div><div class="panel-face panel-face-back"></div></div></div>
+                                <div class="panel-petal" style="--angle: 120deg;"><div class="panel-segment"><div class="panel-face panel-face-front"></div><div class="panel-face panel-face-back"></div></div><div class="panel-segment"><div class="panel-face panel-face-front"></div><div class="panel-face panel-face-back"></div></div><div class="panel-segment"><div class="panel-face panel-face-front"></div><div class="panel-face panel-face-back"></div></div><div class="panel-segment"><div class="panel-face panel-face-front"></div><div class="panel-face panel-face-back"></div></div></div>
+                                <div class="panel-petal" style="--angle: 150deg;"><div class="panel-segment"><div class="panel-face panel-face-front"></div><div class="panel-face panel-face-back"></div></div><div class="panel-segment"><div class="panel-face panel-face-front"></div><div class="panel-face panel-face-back"></div></div><div class="panel-segment"><div class="panel-face panel-face-front"></div><div class="panel-face panel-face-back"></div></div><div class="panel-segment"><div class="panel-face panel-face-front"></div><div class="panel-face panel-face-back"></div></div></div>
+                                <div class="panel-petal" style="--angle: 180deg;"><div class="panel-segment"><div class="panel-face panel-face-front"></div><div class="panel-face panel-face-back"></div></div><div class="panel-segment"><div class="panel-face panel-face-front"></div><div class="panel-face panel-face-back"></div></div><div class="panel-segment"><div class="panel-face panel-face-front"></div><div class="panel-face panel-face-back"></div></div><div class="panel-segment"><div class="panel-face panel-face-front"></div><div class="panel-face panel-face-back"></div></div></div>
+                                <div class="panel-petal" style="--angle: 210deg;"><div class="panel-segment"><div class="panel-face panel-face-front"></div><div class="panel-face panel-face-back"></div></div><div class="panel-segment"><div class="panel-face panel-face-front"></div><div class="panel-face panel-face-back"></div></div><div class="panel-segment"><div class="panel-face panel-face-front"></div><div class="panel-face panel-face-back"></div></div><div class="panel-segment"><div class="panel-face panel-face-front"></div><div class="panel-face panel-face-back"></div></div></div>
+                                <div class="panel-petal" style="--angle: 240deg;"><div class="panel-segment"><div class="panel-face panel-face-front"></div><div class="panel-face panel-face-back"></div></div><div class="panel-segment"><div class="panel-face panel-face-front"></div><div class="panel-face panel-face-back"></div></div><div class="panel-segment"><div class="panel-face panel-face-front"></div><div class="panel-face panel-face-back"></div></div><div class="panel-segment"><div class="panel-face panel-face-front"></div><div class="panel-face panel-face-back"></div></div></div>
+                                <div class="panel-petal" style="--angle: 270deg;"><div class="panel-segment"><div class="panel-face panel-face-front"></div><div class="panel-face panel-face-back"></div></div><div class="panel-segment"><div class="panel-face panel-face-front"></div><div class="panel-face panel-face-back"></div></div><div class="panel-segment"><div class="panel-face panel-face-front"></div><div class="panel-face panel-face-back"></div></div><div class="panel-segment"><div class="panel-face panel-face-front"></div><div class="panel-face panel-face-back"></div></div></div>
+                                <div class="panel-petal" style="--angle: 300deg;"><div class="panel-segment"><div class="panel-face panel-face-front"></div><div class="panel-face panel-face-back"></div></div><div class="panel-segment"><div class="panel-face panel-face-front"></div><div class="panel-face panel-face-back"></div></div><div class="panel-segment"><div class="panel-face panel-face-front"></div><div class="panel-face panel-face-back"></div></div><div class="panel-segment"><div class="panel-face panel-face-front"></div><div class="panel-face panel-face-back"></div></div></div>
+                                <div class="panel-petal" style="--angle: 330deg;"><div class="panel-segment"><div class="panel-face panel-face-front"></div><div class="panel-face panel-face-back"></div></div><div class="panel-segment"><div class="panel-face panel-face-front"></div><div class="panel-face panel-face-back"></div></div><div class="panel-segment"><div class="panel-face panel-face-front"></div><div class="panel-face panel-face-back"></div></div><div class="panel-segment"><div class="panel-face panel-face-front"></div><div class="panel-face panel-face-back"></div></div></div>
+                            </div>
+                        </div>
+                        <div class="deployable-arm right">
+                             <div class="array-hub right">
+                                <!-- 12 Petals for a full circle -->
+                                <div class="panel-petal" style="--angle: 0deg;"><div class="panel-segment"><div class="panel-face panel-face-front"></div><div class="panel-face panel-face-back"></div></div><div class="panel-segment"><div class="panel-face panel-face-front"></div><div class="panel-face panel-face-back"></div></div><div class="panel-segment"><div class="panel-face panel-face-front"></div><div class="panel-face panel-face-back"></div></div><div class="panel-segment"><div class="panel-face panel-face-front"></div><div class="panel-face panel-face-back"></div></div></div>
+                                <div class="panel-petal" style="--angle: 30deg;"><div class="panel-segment"><div class="panel-face panel-face-front"></div><div class="panel-face panel-face-back"></div></div><div class="panel-segment"><div class="panel-face panel-face-front"></div><div class="panel-face panel-face-back"></div></div><div class="panel-segment"><div class="panel-face panel-face-front"></div><div class="panel-face panel-face-back"></div></div><div class="panel-segment"><div class="panel-face panel-face-front"></div><div class="panel-face panel-face-back"></div></div></div>
+                                <div class="panel-petal" style="--angle: 60deg;"><div class="panel-segment"><div class="panel-face panel-face-front"></div><div class="panel-face panel-face-back"></div></div><div class="panel-segment"><div class="panel-face panel-face-front"></div><div class="panel-face panel-face-back"></div></div><div class="panel-segment"><div class="panel-face panel-face-front"></div><div class="panel-face panel-face-back"></div></div><div class="panel-segment"><div class="panel-face panel-face-front"></div><div class="panel-face panel-face-back"></div></div></div>
+                                <div class="panel-petal" style="--angle: 90deg;"><div class="panel-segment"><div class="panel-face panel-face-front"></div><div class="panel-face panel-face-back"></div></div><div class="panel-segment"><div class="panel-face panel-face-front"></div><div class="panel-face panel-face-back"></div></div><div class="panel-segment"><div class="panel-face panel-face-front"></div><div class="panel-face panel-face-back"></div></div><div class="panel-segment"><div class="panel-face panel-face-front"></div><div class="panel-face panel-face-back"></div></div></div>
+                                <div class="panel-petal" style="--angle: 120deg;"><div class="panel-segment"><div class="panel-face panel-face-front"></div><div class="panel-face panel-face-back"></div></div><div class="panel-segment"><div class="panel-face panel-face-front"></div><div class="panel-face panel-face-back"></div></div><div class="panel-segment"><div class="panel-face panel-face-front"></div><div class="panel-face panel-face-back"></div></div><div class="panel-segment"><div class="panel-face panel-face-front"></div><div class="panel-face panel-face-back"></div></div></div>
+                                <div class="panel-petal" style="--angle: 150deg;"><div class="panel-segment"><div class="panel-face panel-face-front"></div><div class="panel-face panel-face-back"></div></div><div class="panel-segment"><div class="panel-face panel-face-front"></div><div class="panel-face panel-face-back"></div></div><div class="panel-segment"><div class="panel-face panel-face-front"></div><div class="panel-face panel-face-back"></div></div><div class="panel-segment"><div class="panel-face panel-face-front"></div><div class="panel-face panel-face-back"></div></div></div>
+                                <div class="panel-petal" style="--angle: 180deg;"><div class="panel-segment"><div class="panel-face panel-face-front"></div><div class="panel-face panel-face-back"></div></div><div class="panel-segment"><div class="panel-face panel-face-front"></div><div class="panel-face panel-face-back"></div></div><div class="panel-segment"><div class="panel-face panel-face-front"></div><div class="panel-face panel-face-back"></div></div><div class="panel-segment"><div class="panel-face panel-face-front"></div><div class="panel-face panel-face-back"></div></div></div>
+                                <div class="panel-petal" style="--angle: 210deg;"><div class="panel-segment"><div class="panel-face panel-face-front"></div><div class="panel-face panel-face-back"></div></div><div class="panel-segment"><div class="panel-face panel-face-front"></div><div class="panel-face panel-face-back"></div></div><div class="panel-segment"><div class="panel-face panel-face-front"></div><div class="panel-face panel-face-back"></div></div><div class="panel-segment"><div class="panel-face panel-face-front"></div><div class="panel-face panel-face-back"></div></div></div>
+                                <div class="panel-petal" style="--angle: 240deg;"><div class="panel-segment"><div class="panel-face panel-face-front"></div><div class="panel-face panel-face-back"></div></div><div class="panel-segment"><div class="panel-face panel-face-front"></div><div class="panel-face panel-face-back"></div></div><div class="panel-segment"><div class="panel-face panel-face-front"></div><div class="panel-face panel-face-back"></div></div><div class="panel-segment"><div class="panel-face panel-face-front"></div><div class="panel-face panel-face-back"></div></div></div>
+                                <div class="panel-petal" style="--angle: 270deg;"><div class="panel-segment"><div class="panel-face panel-face-front"></div><div class="panel-face panel-face-back"></div></div><div class="panel-segment"><div class="panel-face panel-face-front"></div><div class="panel-face panel-face-back"></div></div><div class="panel-segment"><div class="panel-face panel-face-front"></div><div class="panel-face panel-face-back"></div></div><div class="panel-segment"><div class="panel-face panel-face-front"></div><div class="panel-face panel-face-back"></div></div></div>
+                                <div class="panel-petal" style="--angle: 300deg;"><div class="panel-segment"><div class="panel-face panel-face-front"></div><div class="panel-face panel-face-back"></div></div><div class="panel-segment"><div class="panel-face panel-face-front"></div><div class="panel-face panel-face-back"></div></div><div class="panel-segment"><div class="panel-face panel-face-front"></div><div class="panel-face panel-face-back"></div></div><div class="panel-segment"><div class="panel-face panel-face-front"></div><div class="panel-face panel-face-back"></div></div></div>
+                                <div class="panel-petal" style="--angle: 330deg;"><div class="panel-segment"><div class="panel-face panel-face-front"></div><div class="panel-face panel-face-back"></div></div><div class="panel-segment"><div class="panel-face panel-face-front"></div><div class="panel-face panel-face-back"></div></div><div class="panel-segment"><div class="panel-face panel-face-front"></div><div class="panel-face panel-face-back"></div></div><div class="panel-segment"><div class="panel-face panel-face-front"></div><div class="panel-face panel-face-back"></div></div></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="lg:col-span-2 p-8 rounded-lg space-y-8" style="background: rgba(6, 17, 33, 0.5);">
+                    <div>
+                        <h3 class="font-display text-2xl text-cyan mb-4">Deployment Control</h3>
+                        <div class="flex items-center justify-center space-x-4">
+                            <button id="deploy-btn" class="control-btn w-full bg-cyan hover:bg-cyan/80 text-indigo font-bold py-3 rounded-lg transition-colors">Deploy Arrays (ON)</button>
+                            <button id="retract-btn" class="control-btn w-full bg-saffron/20 hover:bg-saffron/40 text-saffron font-bold py-3 rounded-lg transition-colors" disabled>Retract Arrays (OFF)</button>
+                        </div>
+                         <p class="text-center text-gold text-lg mt-4 font-display">
+                            Status: <span id="deployment-status">Stowed</span>
+                        </p>
+                    </div>
+
+                    <div>
+                        <h3 class="font-display text-2xl text-cyan mb-4">Primary Power Readout</h3>
+                        <div class="space-y-4">
+                            <div class="p-4 bg-black/30 rounded-lg">
+                                <p class="text-sm text-gray-400">Power Generation</p>
+                                <p class="text-3xl font-bold text-gold"><span id="power-output">0.0</span> kW</p>
+                            </div>
+                            <div class="p-4 bg-black/30 rounded-lg">
+                                <p class="text-sm text-gray-400">"Indra's Vault" Battery</p>
+                                <p class="text-3xl font-bold text-gold"><span id="battery-level">95.0</span> %</p>
+                            </div>
+                             <div class="p-4 bg-black/30 rounded-lg">
+                                <p class="text-sm text-gray-400">System Efficiency</p>
+                                <p class="text-3xl font-bold text-gold"><span id="efficiency-level">32.5</span> %</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <h3 class="font-display text-2xl text-cyan mb-4">Backup Systems</h3>
+                        <div class="space-y-3">
+                            <div class="p-3 bg-black/30 rounded-lg flex justify-between items-center">
+                                <div class="flex items-center space-x-3">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-saffron" viewBox="0 0 20 20" fill="currentColor">
+                                        <path fill-rule="evenodd" d="M12.963 2.286a.75.75 0 00-1.071 1.05l.849 1.7-1.886.848a.75.75 0 00-.517 1.258l2.073 3.456-2.073 3.456a.75.75 0 00.517 1.258l1.886.848-.849 1.7a.75.75 0 001.071 1.05l4.184-2.203a.75.75 0 000-1.306L12.963 2.286z" clip-rule="evenodd" />
+                                        <path fill-rule="evenodd" d="M6.037 2.286a.75.75 0 011.071 1.05l-.849 1.7 1.886.848a.75.75 0 01.517 1.258L10.637 10l-2.073 3.456a.75.75 0 01-.517 1.258l-1.886.848.849 1.7a.75.75 0 01-1.071 1.05L1.816 13.57a.75.75 0 010-1.306L6.037 2.286z" clip-rule="evenodd" />
+                                    </svg>
+                                    <p class="font-semibold text-white">"Agni" Fuel Cells</p>
+                                </div>
+                                <span class="font-semibold text-gray-400">STANDBY</span>
+                            </div>
+                            <div class="p-3 bg-black/30 rounded-lg flex justify-between items-center">
+                                <div class="flex items-center space-x-3">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-saffron" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+                                        <ellipse cx="12" cy="12" rx="10" ry="4" />
+                                        <ellipse cx="12" cy="12" rx="10" ry="4" transform="rotate(60 12 12)" />
+                                        <ellipse cx="12" cy="12" rx="10" ry="4" transform="rotate(120 12 12)" />
+                                        <circle cx="12" cy="12" r="1.5" fill="currentColor" />
+                                    </svg>
+                                    <p class="font-semibold text-white">RTG Failsafe</p>
+                                </div>
+                                <span class="font-semibold text-green-400">NOMINAL</span>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const deployBtn = document.getElementById('deploy-btn');
+            const retractBtn = document.getElementById('retract-btn');
+            const shipVisualizer = document.getElementById('ship-visualizer');
+            
+            const powerOutputEl = document.getElementById('power-output');
+            const batteryLevelEl = document.getElementById('battery-level');
+            const efficiencyLevelEl = document.getElementById('efficiency-level');
+            const deploymentStatusEl = document.getElementById('deployment-status');
+            
+            const MAX_POWER = 150.0; // Doubled for two arrays
+            const BASE_EFFICIENCY = 32.5;
+            const ANIMATION_DURATION = 2500; // Increased for multi-stage animation
+
+            let isDeployed = false;
+            let batteryInterval;
+
+            function updateMetrics() {
+                if (isDeployed) {
+                    powerOutputEl.textContent = MAX_POWER.toFixed(1);
+                    efficiencyLevelEl.textContent = (BASE_EFFICIENCY - 0.2).toFixed(1);
+                    deploymentStatusEl.textContent = 'Fully Deployed';
+                } else {
+                    powerOutputEl.textContent = '0.0';
+                    efficiencyLevelEl.textContent = BASE_EFFICIENCY.toFixed(1);
+                    deploymentStatusEl.textContent = 'Stowed';
+                }
+            }
+
+            function manageBattery() {
+                clearInterval(batteryInterval); // Clear any existing interval
+                batteryInterval = setInterval(() => {
+                    let battery = parseFloat(batteryLevelEl.textContent);
+                    if (isDeployed) {
+                        // Charging
+                        if (battery < 100) {
+                            batteryLevelEl.textContent = (battery + 0.1).toFixed(1);
+                        }
+                    } else {
+                        // Draining
+                        if (battery > 20) {
+                            batteryLevelEl.textContent = (battery - 0.1).toFixed(1);
+                        }
+                    }
+                }, 1000);
+            }
+            
+            deployBtn.addEventListener('click', () => {
+                isDeployed = true;
+                deploymentStatusEl.textContent = 'Deploying...';
+                deployBtn.disabled = true;
+                retractBtn.disabled = true;
+                
+                shipVisualizer.classList.add('deployed');
+                
+                setTimeout(() => {
+                    updateMetrics();
+                    retractBtn.disabled = false;
+                    manageBattery();
+                }, ANIMATION_DURATION);
+            });
+
+            retractBtn.addEventListener('click', () => {
+                isDeployed = false;
+                deploymentStatusEl.textContent = 'Retracting...';
+                deployBtn.disabled = true;
+                retractBtn.disabled = true;
+                
+                shipVisualizer.classList.remove('deployed');
+                
+                setTimeout(() => {
+                    updateMetrics();
+                    deployBtn.disabled = false;
+                    manageBattery();
+                }, ANIMATION_DURATION);
+            });
+
+            // Start initial battery drain
+            manageBattery();
+        });
+    </script>
+</body>
+</html>
+

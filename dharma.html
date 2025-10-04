@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cosmic Dharma Protocols | Project LEO</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --saffron: #FF9933;
+            --indigo: #0a192f;
+            --gold: #FFD700;
+            --off-white: #F3EFE0;
+            --cyan: #38bdf8;
+        }
+        body {
+            font-family: 'Poppins', sans-serif;
+            background-color: var(--indigo);
+            color: var(--off-white);
+            background-image: url('https://www.transparenttextures.com/patterns/stardust.png');
+        }
+        .font-display {
+            font-family: 'Syne', sans-serif;
+            font-weight: 800;
+        }
+        .text-saffron { color: var(--saffron); }
+        .text-gold { color: var(--gold); }
+        
+        .protocol-item {
+            border: 1px solid rgba(255, 153, 51, 0.3);
+            background: rgba(23, 42, 69, 0.4);
+            transition: background-color 0.3s ease;
+        }
+        .protocol-header {
+            cursor: pointer;
+        }
+        .protocol-item:hover {
+            background-color: rgba(23, 42, 69, 0.8);
+        }
+        .protocol-content {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.5s cubic-bezier(0.25, 0.1, 0.25, 1), padding 0.5s ease;
+            padding-top: 0;
+            padding-bottom: 0;
+        }
+        .protocol-item.open .protocol-content {
+            max-height: 500px; /* Adjust as needed */
+            padding-top: 1rem;
+            padding-bottom: 1.5rem;
+        }
+        .protocol-item.open .chevron {
+             transform: rotate(180deg);
+        }
+        .chevron {
+            transition: transform 0.3s ease;
+        }
+    </style>
+</head>
+<body class="antialiased">
+
+    <header class="py-6 px-8">
+        <div class="max-w-7xl mx-auto flex justify-between items-center">
+            <a href="Homepage.html" class="font-display text-3xl text-saffron">LumenOrb</a>
+            <a href="page2.html" class="bg-saffron/20 border border-saffron text-saffron font-semibold py-2 px-6 rounded-lg hover:bg-saffron hover:text-indigo transition-all">
+                &larr; Back to Mission
+            </a>
+        </div>
+    </header>
+
+    <main class="py-12 px-8">
+        <div class="max-w-4xl mx-auto">
+            <div class="text-center">
+                <h1 class="font-display text-4xl md:text-5xl text-saffron">Cosmic Dharma Protocols</h1>
+                <p class="mt-4 max-w-3xl mx-auto text-lg text-gray-300">
+                    The sacred laws that govern the lifecycle of all celestial objects launched by Project LEO, ensuring the purity and order of the heavens for generations to come.
+                </p>
+            </div>
+
+            <div id="protocols-container" class="mt-16 space-y-4">
+                <!-- Protocols will be injected here -->
+            </div>
+        </div>
+    </main>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const protocolsContainer = document.getElementById('protocols-container');
+            const protocols = [
+                { 
+                    title: 'The Path of Swift Return or Final Departure', 
+                    summary: 'The preferred methods. At mission\'s end, a craft must either be guided to a safe reentry over an ocean or be sent away from Earth forever into deep space.',
+                    details: [
+                        '**Direct Reentry:** Must ensure human casualty risk is less than 1 in 10,000.',
+                        '**Heliocentric Escape:** Maneuver to an orbit that permanently leaves Earth\'s gravitational influence.'
+                    ]
+                },
+                { 
+                    title: 'The 25-Year Sunset', 
+                    summary: 'If a craft cannot perform an immediate reentry, it must be left in an orbit where atmospheric drag will naturally cause it to de-orbit within 25 years.',
+                    details: [
+                        '**Natural Decay:** Must use conservative projections for solar activity.',
+                        '**Drag Devices:** Any devices used to speed up decay must not increase the risk of fragmentation upon collision.',
+                        '**Casualty Risk:** Reentry casualty risk must still remain below 1 in 10,000.'
+                    ]
+                },
+                { 
+                    title: 'The Celestial Boneyards', 
+                    summary: 'For craft operating between LEO and GEO, they must be moved to specific, less-trafficked "storage" orbits to prevent interference with active constellations.',
+                    details: [
+                        '**Rule:** Perigee must remain above LEO and apogee below GEO for at least 100 years.',
+                        '**MEO Protection:** Must not cross the operational altitudes of major MEO constellations (e.g., GPS at ~20,200 km).'
+                    ]
+                },
+                 { 
+                    title: 'The Graveyard Above the Kings', 
+                    summary: 'Craft operating in Geostationary Orbit (GEO) must be moved to a higher "graveyard" orbit at the end of their life.',
+                    details: [
+                        '**Altitude Rule:** Perigee must be sufficiently above 35,986 km to remain clear of the GEO zone for at least 100 years.'
+                    ]
+                },
+                { 
+                    title: 'The Long Sleep and Resonant Return', 
+                    summary: 'For spacecraft in unique, high-altitude orbits, a long-term disposal plan is required that uses orbital resonances to eventually guide the craft to reentry.',
+                    details: [
+                        '**Lifetime Limit:** Post-mission lifetime should be as short as possible, not exceeding 200 years.',
+                        '**Collision Risk:** Probability of collision with large debris must be less than 1 in 1,000 over its lifetime.',
+                        '**Casualty Area:** Total surviving debris area must be less than 7 m².'
+                    ]
+                },
+                { 
+                    title: 'The Shepherd\'s Call', 
+                    summary: 'The ideal path. A craft can be actively retrieved and removed from orbit by another vehicle, essentially "shepherding" it back to Earth.',
+                    details: [
+                        '**Timeline:** Retrieval must occur at the end of the mission, or no more than 5 years after.'
+                    ]
+                },
+            ];
+
+            protocols.forEach(p => {
+                const item = document.createElement('div');
+                item.className = 'protocol-item rounded-lg';
+
+                let detailsHtml = p.details.map(d => `<li class="text-gray-200 text-base">${d.replace(/\*\*(.*?)\*\*/g, '<strong class="text-gold">$1</strong>')}</li>`).join('');
+
+                item.innerHTML = `
+                    <div class="protocol-header p-6 flex justify-between items-center">
+                        <h3 class="font-display text-xl text-gold">${p.title}</h3>
+                        <svg class="chevron h-6 w-6 text-saffron transition-transform" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" /></svg>
+                    </div>
+                    <div class="protocol-content px-6">
+                        <p class="text-lg text-gray-300">${p.summary}</p>
+                        <ul class="mt-4 list-disc list-inside space-y-2">
+                            ${detailsHtml}
+                        </ul>
+                    </div>
+                `;
+                protocolsContainer.appendChild(item);
+            });
+
+            protocolsContainer.addEventListener('click', (e) => {
+                const header = e.target.closest('.protocol-header');
+                if (header) {
+                    const item = header.parentElement;
+                    item.classList.toggle('open');
+                }
+            });
+        });
+    </script>
+
+</body>
+</html>

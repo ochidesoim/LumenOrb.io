@@ -1,0 +1,528 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Ratha Launch System | Project LEO</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+  <style>
+      :root {
+          --saffron: #FF9933;
+          --indigo: #0a192f;
+      }
+      body {
+          font-family: 'Poppins', sans-serif;
+          background: radial-gradient(circle, #0c0c2a 0%, #000000 100%);
+          color: #ffffff;
+          overflow: hidden;
+          height: 100vh;
+      }
+      .font-display {
+          font-family: 'Syne', sans-serif;
+          font-weight: 800;
+      }
+      .text-saffron { color: var(--saffron); }
+
+      #container { position: relative; width: 100%; height: 100vh; }
+      #webgl-canvas { display: block; width: 100%; height: 100%; }
+      #fallback { display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: radial-gradient(circle, #1a1a3a 0%, #000000 100%); align-items: center; justify-content: center; text-align: center; z-index: 1000; }
+      .fallback-globe { width: 300px; height: 300px; border-radius: 50%; background: linear-gradient(135deg, #4a9eff 0%, #0066cc 50%, #003d7a 100%); position: relative; animation: rotate 10s linear infinite; box-shadow: 0 0 50px rgba(74, 158, 255, 0.3); }
+      .fallback-station { position: absolute; width: 8px; height: 8px; border-radius: 50%; background: #ff6b35; box-shadow: 0 0 10px #ff6b35; animation: pulse 2s ease-in-out infinite; }
+      @keyframes rotate { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+      @keyframes pulse { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.7; transform: scale(1.2); } }
+      .ui-panel { pointer-events: auto; background: rgba(0, 0, 0, 0.8); border-radius: 10px; padding: 15px; backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.2); }
+      
+      #control-panel {
+          position: absolute;
+          top: 100px; /* Adjusted for header */
+          left: 20px;
+          max-width: 300px;
+      }
+
+      .station-name { font-size: 18px; font-weight: bold; color: #4a9eff; margin-bottom: 5px; }
+      button { background: linear-gradient(135deg, #ff6b35 0%, #ff4500 100%); color: white; border: none; padding: 12px 24px; border-radius: 25px; font-size: 14px; font-weight: bold; cursor: pointer; transition: all 0.3s ease; margin: 5px; text-transform: uppercase; letter-spacing: 1px; }
+      button:hover { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(255, 107, 53, 0.4); }
+      button:disabled { opacity: 0.6; cursor: not-allowed; transform: none; box-shadow: none; }
+      .spinner { width: 50px; height: 50px; border: 3px solid rgba(255, 255, 255, 0.3); border-top: 3px solid #4a9eff; border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto 20px; }
+      @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+  </style>
+</head>
+<body>
+    <header class="py-6 px-8 absolute top-0 left-0 right-0 z-20">
+        <div class="max-w-7xl mx-auto flex justify-between items-center">
+            <a href="index.html" class="font-display text-3xl text-saffron">LumenOrb</a>
+            <a href="page2.html" class="bg-white/10 border border-white/20 text-white font-semibold py-2 px-6 rounded-lg hover:bg-white hover:text-indigo transition-all">
+                &larr; Back to Mission
+            </a>
+        </div>
+    </header>
+
+    <div id="loading" class="fixed inset-0 flex flex-col items-center justify-center z-50 bg-gray-900">
+        <div class="spinner mb-4"></div>
+        <p class="text-indigo-300">Initializing Ratha Launch System...</p>
+    </div>
+    
+    <div id="container" class="relative h-screen w-full">
+        <canvas id="webgl-canvas"></canvas>
+        <div id="fallback">
+            <div>
+                <h2>WebGL Not Supported</h2>
+                <p style="margin: 20px 0;">Please use a modern browser.</p>
+                <div class="fallback-globe"></div>
+            </div>
+        </div>
+        
+        <div id="ui-overlay" class="absolute inset-0 pointer-events-none p-5">
+            <div id="control-panel" class="ui-panel">
+                <div class="station-info">
+                    <div class="station-name">Select a Space Station</div>
+                    <div class="station-description">Click on a glowing station marker to begin mission planning</div>
+                </div>
+                <div>
+                    <button id="play-pause-btn">⏸ Pause</button>
+                    <button id="rewind-btn">⏮ Rewind</button>
+                    <button id="mute-btn">🔊 Audio</button>
+                </div>
+            </div>
+            
+            <div id="launch-panel" class="ui-panel hidden absolute bottom-5 left-1/2 -translate-x-1/2 text-center">
+                <div class="station-info">
+                    <div class="station-name" id="selected-station-name">ISS</div>
+                    <div class="station-description" id="selected-station-desc">International Space Station</div>
+                </div>
+                <button id="launch-btn" class="btn-primary">🚀 Launch Mission</button>
+                <button id="select-another-btn" class="btn-primary mt-2">Select Another Station</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/three@0.155.0/build/three.min.js"></script>
+    <script src="https://unpkg.com/gsap@3.12.2/dist/gsap.min.js"></script>
+
+    <script>
+    (function() {
+        const CONFIG = {
+            lowPowerMode: new URLSearchParams(window.location.search).get('low') === 'true',
+            earthRadius: 10,
+            atmosphereRadius: 11,
+            leoAltitude: 12.5,
+            launchDuration: 60,
+            boosterSeparationTime: 15,
+        };
+        const SPACE_STATIONS = [
+            { name: "ISS", fullName: "International Space Station", lat: 0, lon: 0, description: "Low Earth orbit research laboratory. Altitude: ~400km.", color: 0x818cf8 },
+            { name: "Tiangong", fullName: "Chinese Space Station", lat: 41.5, lon: 109.5, description: "China's modular space station. Operational since 2021.", color: 0xf472b6 },
+            { name: "Kennedy", fullName: "KSC Launch Complex", lat: 28.573469, lon: -80.651070, description: "NASA's primary launch center for space missions.", color: 0x4ade80 },
+            { name: "Baikonur", fullName: "Baikonur Cosmodrome", lat: 45.920278, lon: 63.342222, description: "World's first and largest operational space launch facility.", color: 0xff4444 },
+            { name: "Kourou", fullName: "Guiana Space Centre", lat: 5.239, lon: -52.768, description: "European spaceport near equator.", color: 0xffaa00 }
+        ];
+
+        let scene, camera, renderer, raycaster, pointer, rocket;
+        let earth, atmosphere;
+        let spaceStations = [];
+        let selectedStation = null;
+        let launchTimeline = null;
+        let isLaunching = false;
+        let targetRotationX = 0, targetRotationY = 0, rotationX = 0, rotationY = 0;
+
+
+        async function init() {
+            try {
+                if (!isWebGLSupported()) {
+                    showFallback();
+                    return;
+                }
+                
+                setupScene();
+                setupLighting();
+                await createEarth();
+                createAtmosphere();
+                createSpaceStations();
+                createConnectionArcs();
+                setupControls();
+                setupUI();
+                
+                animate();
+                document.getElementById('loading').style.display = 'none';
+            } catch (error) {
+                console.error('Initialization failed:', error);
+                showFallback();
+            }
+        }
+
+        function isWebGLSupported() {
+            try {
+                const canvas = document.createElement('canvas');
+                return !!(window.WebGLRenderingContext && (canvas.getContext('webgl') || canvas.getContext('experimental-webgl')));
+            } catch (e) { return false; }
+        }
+        
+        function showFallback() {
+            document.getElementById('loading').style.display = 'none';
+            document.getElementById('fallback').style.display = 'flex';
+        }
+        
+        function setupScene() {
+            scene = new THREE.Scene();
+            camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 10000);
+            camera.position.set(0, 0, 25);
+            
+            const canvas = document.getElementById('webgl-canvas');
+            renderer = new THREE.WebGLRenderer({ 
+                canvas: canvas, 
+                antialias: !CONFIG.lowPowerMode,
+                alpha: true,
+                powerPreference: CONFIG.lowPowerMode ? 'low-power' : 'high-performance'
+            });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+            raycaster = new THREE.Raycaster();
+            pointer = new THREE.Vector2();
+
+            window.addEventListener('resize', onWindowResize, false);
+        }
+        
+        function setupLighting() {
+            scene.add(new THREE.AmbientLight(0x404040, 0.3));
+            const sunLight = new THREE.DirectionalLight(0xffffff, 1.0);
+            sunLight.position.set(30, 20, 10);
+            scene.add(sunLight);
+        }
+        
+        async function createEarth() {
+            const earthGeometry = new THREE.SphereGeometry(CONFIG.earthRadius, 64, 32);
+            const earthTexture = createEarthTexture();
+            const earthMaterial = new THREE.MeshLambertMaterial({ map: earthTexture });
+            earth = new THREE.Mesh(earthGeometry, earthMaterial);
+            scene.add(earth);
+        }
+        
+        function createEarthTexture() {
+            const canvas = document.createElement('canvas');
+            canvas.width = 512; canvas.height = 256;
+            const ctx = canvas.getContext('2d');
+            const gradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
+            gradient.addColorStop(0, '#1e3a8a');
+            gradient.addColorStop(0.5, '#3b82f6');
+            gradient.addColorStop(1, '#1e40af');
+            ctx.fillStyle = gradient;
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            ctx.fillStyle = '#22c55e';
+            ctx.beginPath(); ctx.ellipse(100, 80, 40, 30, 0, 0, 2 * Math.PI); ctx.fill();
+            ctx.beginPath(); ctx.ellipse(280, 70, 60, 25, 0, 0, 2 * Math.PI); ctx.fill();
+            ctx.beginPath(); ctx.ellipse(270, 140, 25, 40, 0, 0, 2 * Math.PI); ctx.fill();
+            ctx.beginPath(); ctx.ellipse(400, 180, 20, 15, 0, 0, 2 * Math.PI); ctx.fill();
+            ctx.beginPath(); ctx.ellipse(130, 180, 20, 35, 0, 0, 2 * Math.PI); ctx.fill();
+            const texture = new THREE.CanvasTexture(canvas);
+            texture.wrapS = THREE.RepeatWrapping;
+            texture.wrapT = THREE.RepeatWrapping;
+            return texture;
+        }
+
+        function createAtmosphere() {
+            const atmosphereGeometry = new THREE.SphereGeometry(CONFIG.atmosphereRadius, 32, 16);
+            const atmosphereMaterial = new THREE.ShaderMaterial({
+                vertexShader: `varying vec3 vNormal; void main() { vNormal = normalize(normalMatrix * normal); gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }`,
+                fragmentShader: `uniform float opacity; varying vec3 vNormal; void main() { float intensity = pow(0.8 - dot(vNormal, vec3(0.0, 0.0, 1.0)), 2.0); gl_FragColor = vec4(0.3, 0.6, 1.0, intensity * opacity); }`,
+                uniforms: { opacity: { value: 0.6 } },
+                transparent: true,
+                side: THREE.BackSide
+            });
+            atmosphere = new THREE.Mesh(atmosphereGeometry, atmosphereMaterial);
+            earth.add(atmosphere);
+        }
+        
+        function createSpaceStations() {
+            SPACE_STATIONS.forEach(stationData => {
+                const station = createSpaceStation(stationData);
+                spaceStations.push(station);
+                earth.add(station);
+            });
+        }
+        
+        function createSpaceStation(stationData) {
+            const group = new THREE.Group();
+            const position = latLonToVector3(stationData.lat, stationData.lon, CONFIG.earthRadius + 0.5);
+            group.position.copy(position);
+            
+            const marker = new THREE.Mesh(new THREE.SphereGeometry(0.15, 12, 8), new THREE.MeshLambertMaterial({ color: stationData.color, emissive: stationData.color, emissiveIntensity: 0.7 }));
+            group.add(marker);
+            
+            const glow = new THREE.Mesh(new THREE.SphereGeometry(0.3, 12, 8), new THREE.MeshBasicMaterial({ color: stationData.color, transparent: true, opacity: 0.4, side: THREE.BackSide }));
+            group.add(glow);
+            
+            group.userData = { ...stationData, marker, glow };
+            gsap.to(glow.scale, { duration: 2, x: 1.5, y: 1.5, z: 1.5, repeat: -1, yoyo: true, ease: "power2.inOut" });
+            return group;
+        }
+
+        function latLonToVector3(lat, lon, radius) {
+            const phi = (90 - lat) * (Math.PI / 180);
+            const theta = (lon + 180) * (Math.PI / 180);
+            const x = -(radius * Math.sin(phi) * Math.cos(theta));
+            const z = radius * Math.sin(phi) * Math.sin(theta);
+            const y = radius * Math.cos(phi);
+            return new THREE.Vector3(x, y, z);
+        }
+        
+        function createConnectionArcs() {
+            const arcsGroup = new THREE.Group();
+            for (let i = 0; i < spaceStations.length; i++) {
+                for (let j = i + 1; j < spaceStations.length; j++) {
+                    const arc = createConnectionArc(spaceStations[i], spaceStations[j]);
+                    arcsGroup.add(arc);
+                }
+            }
+            earth.add(arcsGroup);
+        }
+        
+        function createConnectionArc(station1, station2) {
+            const start = station1.position.clone();
+            const end = station2.position.clone();
+            const midpoint = start.clone().add(end).multiplyScalar(0.5).normalize().multiplyScalar(CONFIG.earthRadius + 2);
+            const curve = new THREE.QuadraticBezierCurve3(start, midpoint, end);
+            const points = curve.getPoints(50);
+            const geometry = new THREE.BufferGeometry().setFromPoints(points);
+            const material = new THREE.LineBasicMaterial({ color: 0x4a9eff, transparent: true, opacity: 0.6 });
+            const arc = new THREE.Line(geometry, material);
+            const pulse = new THREE.Mesh(new THREE.SphereGeometry(0.05, 8, 6), new THREE.MeshBasicMaterial({ color: 0xffffff }));
+            gsap.to({t: 0}, {
+                duration: 4, t: 1, repeat: -1, ease: "none",
+                onUpdate: function() { pulse.position.copy(curve.getPoint(this.targets()[0].t)); }
+            });
+            arc.add(pulse);
+            return arc;
+        }
+
+        function createFlameTexture() {
+            const canvas = document.createElement('canvas');
+            canvas.width = 32; canvas.height = 128;
+            const ctx = canvas.getContext('2d');
+            const gradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
+            gradient.addColorStop(0, 'white');
+            gradient.addColorStop(0.4, 'orange');
+            gradient.addColorStop(1, 'transparent');
+            ctx.fillStyle = gradient;
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            return new THREE.CanvasTexture(canvas);
+        }
+
+        function createFlame(width, height) {
+            const flameMaterial = new THREE.MeshBasicMaterial({
+                map: createFlameTexture(),
+                color: 0xffa500,
+                transparent: true,
+                blending: THREE.AdditiveBlending,
+                depthWrite: false
+            });
+            const flame = new THREE.Mesh(new THREE.ConeGeometry(width, height, 16, 1, true), flameMaterial);
+            flame.rotation.x = Math.PI;
+            flame.visible = false;
+            return flame;
+        }
+
+        function createRocket() {
+            const group = new THREE.Group();
+            group.userData = {};
+
+            const body = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.15, 1.5, 8), new THREE.MeshLambertMaterial({ color: 0xcccccc }));
+            body.position.y = 0.75;
+            group.add(body);
+            
+            const mainFlame = createFlame(0.15, 2.0);
+            group.add(mainFlame);
+            group.userData.mainFlame = mainFlame;
+
+            const nose = new THREE.Mesh(new THREE.ConeGeometry(0.1, 0.3, 8), new THREE.MeshLambertMaterial({ color: 0xff4444 }));
+            nose.position.y = 1.65;
+            group.add(nose);
+            
+            const boosters = [];
+            for (let i = 0; i < 2; i++) {
+                const booster = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.08, 1.2, 6), new THREE.MeshLambertMaterial({ color: 0x888888 }));
+                booster.position.set((i === 0) ? -0.25 : 0.25, 0.6, 0);
+                booster.userData = {};
+                
+                const flame = createFlame(0.08, 1.0);
+                flame.position.y = -0.6;
+                booster.add(flame);
+                booster.userData.flame = flame;
+
+                group.add(booster);
+                boosters.push(booster);
+            }
+            group.userData.boosters = boosters;
+            return group;
+        }
+        
+        function setupControls() {
+            let isMouseDown = false, mouseX = 0, mouseY = 0;
+            const canvas = renderer.domElement;
+            const onMouseDown = e => { isMouseDown = true; mouseX = e.clientX; mouseY = e.clientY; };
+            const onMouseUp = () => { isMouseDown = false; };
+            const onMouseMove = e => { if (isMouseDown) { targetRotationY = rotationY + (e.clientX - mouseX) * 0.01; targetRotationX = rotationX + (e.clientY - mouseY) * 0.01; } };
+            canvas.addEventListener('mousedown', onMouseDown);
+            canvas.addEventListener('mouseup', onMouseUp);
+            canvas.addEventListener('mousemove', onMouseMove);
+            window.updateCameraControls = () => {
+                rotationX += (targetRotationX - rotationX) * 0.05;
+                rotationY += (targetRotationY - rotationY) * 0.05;
+                if (!isLaunching && earth) {
+                    earth.rotation.y = rotationY;
+                    earth.rotation.x = rotationX;
+                }
+            };
+        }
+        
+        function onCanvasClick(event) {
+            if (isLaunching) return;
+            const rect = renderer.domElement.getBoundingClientRect();
+            pointer.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
+            pointer.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
+            raycaster.setFromCamera(pointer, camera);
+            const clickableObjects = [];
+            spaceStations.forEach(station => {
+                if (station.userData && station.userData.marker) {
+                    clickableObjects.push(station.userData.marker);
+                    clickableObjects.push(station.userData.glow); 
+                }
+            });
+            const intersects = raycaster.intersectObjects(clickableObjects);
+            if (intersects.length > 0) {
+                selectStation(intersects[0].object.parent);
+            }
+        }
+        
+        function selectStation(stationObject) {
+            if (selectedStation) selectedStation.userData.glow.material.opacity = 0.3;
+            selectedStation = stationObject;
+            selectedStation.userData.glow.material.opacity = 0.8;
+            document.getElementById('selected-station-name').textContent = stationObject.userData.fullName;
+            document.getElementById('selected-station-desc').textContent = stationObject.userData.description;
+            document.getElementById('launch-panel').classList.remove('hidden');
+        }
+        
+        function launchSequence() {
+            if (isLaunching || !selectedStation) return;
+            isLaunching = true;
+            document.getElementById('launch-btn').disabled = true;
+            startLaunchSimulation();
+        }
+        
+        function startLaunchSimulation() {
+            rocket = createRocket();
+            const worldPos = new THREE.Vector3();
+            selectedStation.getWorldPosition(worldPos);
+            rocket.position.copy(worldPos);
+            rocket.quaternion.copy(earth.quaternion);
+            rocket.lookAt(new THREE.Vector3(0,0,0));
+            scene.add(rocket);
+
+            const up = rocket.position.clone().normalize();
+            const leoPosition = rocket.position.clone().multiplyScalar(CONFIG.leoAltitude / (CONFIG.earthRadius + 0.5));
+            
+            launchTimeline = gsap.timeline({ onComplete: completeLaunch });
+            
+            const mainFlame = rocket.userData.mainFlame;
+            const boosterFlames = rocket.userData.boosters.map(b => b.userData.flame);
+
+            launchTimeline.call(() => {
+                mainFlame.visible = true;
+                boosterFlames.forEach(f => f.visible = true);
+                gsap.to([mainFlame.scale, ...boosterFlames.map(f => f.scale)], { duration: 0.1, y: 1.2, repeat: -1, yoyo: true, ease: "power1.inOut" });
+            }, [], 0.1);
+
+            launchTimeline.to(rocket.position, {
+                duration: CONFIG.boosterSeparationTime,
+                x: `+=${up.x * 2}`, y: `+=${up.y * 2}`, z: `+=${up.z * 2}`,
+                ease: 'power1.in'
+            }).call(separateBoosters, [], '+=0').to(rocket.position, {
+                duration: CONFIG.launchDuration - CONFIG.boosterSeparationTime,
+                x: leoPosition.x, y: leoPosition.y, z: leoPosition.z,
+                ease: 'power1.inOut'
+            });
+
+            launchTimeline.call(() => {
+                gsap.to(mainFlame.scale, { duration: 0.5, y: 0, ease: "power2.in" });
+            }, [], CONFIG.launchDuration - 1);
+
+            gsap.to(camera.position, {
+                duration: CONFIG.launchDuration,
+                x: leoPosition.x * 1.5, y: leoPosition.y * 1.5, z: leoPosition.z * 1.5,
+                ease: "power2.inOut",
+                onUpdate: () => camera.lookAt(rocket.position)
+            });
+        }
+        
+        function separateBoosters() {
+            if (!rocket || !rocket.userData.boosters) return;
+            rocket.userData.boosters.forEach((booster, index) => {
+                gsap.to(booster.userData.flame.scale, { duration: 0.3, y: 0, ease: "power2.in" });
+                
+                const worldBooster = rocket.localToWorld(booster.position.clone());
+                scene.attach(booster);
+                booster.position.copy(worldBooster);
+                
+                const fallDir = booster.position.clone().normalize().multiplyScalar(-2);
+                const sideDir = new THREE.Vector3((index === 0) ? -1 : 1, 0, 0).applyQuaternion(rocket.quaternion);
+
+                gsap.to(booster.position, {
+                    duration: 10,
+                    x: `+=${fallDir.x + sideDir.x}`,
+                    y: `+=${fallDir.y + sideDir.y}`,
+                    z: `+=${fallDir.z + sideDir.z}`,
+                    ease: "power1.in"
+                });
+                gsap.to(booster.rotation, { duration: 10, x: Math.random() * 5, z: Math.random() * 5 });
+                gsap.to(booster.material, { duration: 10, opacity: 0, onComplete: () => booster.visible = false });
+            });
+        }
+        
+        function completeLaunch() {
+            isLaunching = false;
+            document.getElementById('launch-btn').disabled = false;
+            setTimeout(() => {
+                if (rocket) scene.remove(rocket);
+                document.getElementById('launch-panel').classList.add('hidden');
+                if(selectedStation) selectedStation.userData.glow.material.opacity = 0.4;
+                selectedStation = null;
+            }, 3000);
+        }
+
+        function setupUI() {
+            document.getElementById('launch-btn').addEventListener('click', launchSequence);
+            document.getElementById('select-another-btn').addEventListener('click', () => {
+                 if (isLaunching) return;
+                 selectAnotherStation();
+            });
+            document.getElementById('play-pause-btn').addEventListener('click', () => {
+                if (launchTimeline) launchTimeline.paused(!launchTimeline.paused());
+            });
+            document.getElementById('rewind-btn').addEventListener('click', () => {
+                if (launchTimeline) launchTimeline.restart();
+            });
+            renderer.domElement.addEventListener('click', onCanvasClick);
+        }
+        
+        function onWindowResize() {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        }
+        
+        function animate() {
+            requestAnimationFrame(animate);
+            if(window.updateCameraControls) window.updateCameraControls();
+            if (earth && !isLaunching) earth.rotation.y += 0.0005;
+            renderer.render(scene, camera);
+        }
+        
+        window.addEventListener('load', init);
+    })();
+    </script>
+</body>
+</html>
+

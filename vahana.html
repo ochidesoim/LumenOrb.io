@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vahana Initiative | Project LEO</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --saffron: #FF9933;
+            --indigo: #0a192f;
+            --gold: #FFD700;
+            --off-white: #F3EFE0;
+            --cyan: #38bdf8;
+        }
+        body {
+            font-family: 'Poppins', sans-serif;
+            background-color: var(--indigo);
+            color: var(--off-white);
+            background-image: url('https://www.transparenttextures.com/patterns/stardust.png');
+        }
+        .font-display {
+            font-family: 'Syne', sans-serif;
+            font-weight: 800;
+        }
+        .text-saffron { color: var(--saffron); }
+        .text-gold { color: var(--gold); }
+        .text-cyan { color: var(--cyan); }
+
+        .transport-space {
+            position: relative;
+            height: 300px;
+            background-image: radial-gradient(circle at 50% 50%, rgba(30, 41, 59, 0.5) 1px, transparent 1px);
+            background-size: 2rem 2rem;
+            border: 1px solid rgba(56, 189, 248, 0.2);
+            border-radius: 1rem;
+        }
+        
+        .celestial-body {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 150px;
+            height: 150px;
+            border: 2px solid var(--cyan);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background-color: rgba(100, 116, 139, 0.3);
+        }
+        .lumenorb-station { left: 5%; }
+        .rocket-vehicle { right: 5%; border-radius: 1rem; width: 100px; height: 200px; }
+
+        .vahana-ferry {
+            position: absolute;
+            top: 50%;
+            left: calc(5% + 150px); /* Start at edge of LumenOrb */
+            width: 60px;
+            height: 40px;
+            background-color: var(--saffron);
+            border: 2px solid var(--off-white);
+            border-radius: 0.5rem;
+            transform: translateY(-50%);
+            transition: left 4s cubic-bezier(0.45, 0.05, 0.55, 0.95);
+            box-shadow: 0 0 20px var(--saffron);
+        }
+
+        .transfer-beam {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0%;
+            height: 4px;
+            background: linear-gradient(90deg, var(--gold), var(--saffron));
+            opacity: 0;
+            transition: all 0.5s ease;
+            transform-origin: left;
+        }
+        
+        .transferring .transfer-beam {
+            width: 100%;
+            opacity: 1;
+        }
+
+        .control-btn:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+            background-color: rgba(100,116,139,0.2);
+            border-color: rgba(100,116,139,0.5);
+            color: rgba(100,116,139,0.8);
+        }
+        .progress-bar-bg {
+            background-color: rgba(255, 255, 255, 0.1);
+        }
+        .progress-bar-fill {
+            background-color: var(--gold);
+            transition: width 3s linear;
+        }
+    </style>
+</head>
+<body class="antialiased overflow-x-hidden">
+
+    <header class="py-6 px-8">
+        <div class="max-w-7xl mx-auto flex justify-between items-center">
+            <a href="index.html" class="font-display text-3xl text-saffron">LumenOrb</a>
+            <a href="page2.html" class="bg-saffron/20 border border-saffron text-saffron font-semibold py-2 px-6 rounded-lg hover:bg-saffron hover:text-indigo transition-all">
+                &larr; Back to Mission
+            </a>
+        </div>
+    </header>
+
+    <main class="py-12 px-8">
+        <div class="max-w-7xl mx-auto">
+             <div class="text-center">
+                <h1 class="font-display text-4xl md:text-5xl text-saffron">The Vahana Initiative</h1>
+                <p class="mt-4 max-w-3xl mx-auto text-lg text-gray-300">
+                    Solving the "last-mile" logistics problem in space. The autonomous Vahana Ferry ensures safe, efficient transfer of personnel and mission-critical cargo from newly arrived launch vehicles to the LumenOrb.
+                </p>
+            </div>
+            <div class="mt-16 grid grid-cols-1 lg:grid-cols-5 gap-8 items-center">
+                <!-- Center: Interactive space section -->
+                <div class="lg:col-span-3 p-8 rounded-lg flex flex-col items-center justify-center min-h-[400px]">
+                    <div id="transport-visualizer" class="transport-space w-full">
+                        <div class="celestial-body lumenorb-station">
+                            <span class="font-display text-lg text-cyan">LumenOrb</span>
+                        </div>
+                        <div id="ferry-container" class="absolute inset-0">
+                            <div id="vahana-ferry" class="vahana-ferry"></div>
+                        </div>
+                         <div class="celestial-body rocket-vehicle">
+                            <span class="font-display text-lg text-cyan">Rocket</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right: Controls and Data -->
+                <div class="lg:col-span-2 p-8 rounded-lg space-y-6" style="background: rgba(6, 17, 33, 0.5);">
+                    <div>
+                        <h3 class="font-display text-2xl text-cyan mb-4">Ferry Command</h3>
+                        <div class="space-y-3">
+                            <button id="btn-launch" class="control-btn w-full bg-cyan hover:bg-cyan/80 text-indigo font-bold py-3 rounded-lg transition-colors">1. Launch Ferry to Rocket</button>
+                            <button id="btn-transfer" class="control-btn w-full font-bold py-3 rounded-lg transition-colors" disabled>2. Initiate Cargo Transfer</button>
+                            <button id="btn-return" class="control-btn w-full font-bold py-3 rounded-lg transition-colors" disabled>3. Return Ferry to LumenOrb</button>
+                        </div>
+                    </div>
+
+                    <div>
+                        <h3 class="font-display text-2xl text-cyan mb-4">Transfer Status</h3>
+                        <div class="space-y-4">
+                            <div class="p-4 bg-black/30 rounded-lg">
+                                <p class="text-sm text-gray-400">Current Status</p>
+                                <p id="status-text" class="text-xl font-bold text-gold">Docked at LumenOrb</p>
+                            </div>
+                            <div class="p-4 bg-black/30 rounded-lg">
+                                <p class="text-sm text-gray-400">Cargo Manifest</p>
+                                <p id="manifest-text" class="text-lg font-semibold text-gray-300">Awaiting Assignment</p>
+                            </div>
+                            <div class="p-4 bg-black/30 rounded-lg">
+                                <p class="text-sm text-gray-400">Transfer Progress</p>
+                                <div class="w-full progress-bar-bg rounded-full h-4 mt-2">
+                                    <div id="progress-bar" class="progress-bar-fill h-4 rounded-full" style="width: 0%"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const btnLaunch = document.getElementById('btn-launch');
+            const btnTransfer = document.getElementById('btn-transfer');
+            const btnReturn = document.getElementById('btn-return');
+            
+            const ferry = document.getElementById('vahana-ferry');
+            const statusText = document.getElementById('status-text');
+            const manifestText = document.getElementById('manifest-text');
+            const progressBar = document.getElementById('progress-bar');
+
+            function resetAll() {
+                btnLaunch.disabled = false;
+                btnTransfer.disabled = true;
+                btnReturn.disabled = true;
+                
+                statusText.textContent = 'Docked at LumenOrb';
+                manifestText.textContent = 'Awaiting Assignment';
+                progressBar.style.width = '0%';
+                ferry.style.left = 'calc(5% + 150px)';
+            }
+
+            btnLaunch.addEventListener('click', () => {
+                btnLaunch.disabled = true;
+                statusText.textContent = 'In Transit to Rocket...';
+                manifestText.textContent = 'Water & Life Support Modules';
+                ferry.style.left = 'calc(95% - 100px - 60px)'; // Arrive at edge of rocket
+
+                setTimeout(() => {
+                    statusText.textContent = 'Docked with Rocket';
+                    btnTransfer.disabled = false;
+                }, 4000); // Animation duration
+            });
+
+            btnTransfer.addEventListener('click', () => {
+                btnTransfer.disabled = true;
+                statusText.textContent = 'Transferring Cargo...';
+                progressBar.style.width = '100%';
+
+                setTimeout(() => {
+                    statusText.textContent = 'Transfer Complete';
+                    manifestText.textContent = 'Transfer Complete';
+                    btnReturn.disabled = false;
+                }, 3000); // Progress bar animation duration
+            });
+
+            btnReturn.addEventListener('click', () => {
+                btnReturn.disabled = true;
+                statusText.textContent = 'Returning to LumenOrb...';
+                progressBar.style.width = '0%';
+                ferry.style.left = 'calc(5% + 150px)';
+
+                setTimeout(() => {
+                    resetAll();
+                }, 4000); // Animation duration
+            });
+        });
+    </script>
+</body>
+</html>
+

@@ -1,0 +1,496 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LumenOrb - Investor Portal</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --color-primary-bg: #0d1222;
+            --color-primary-text: #e0e0e0;
+            --color-accent-gold: #FFD700; /* Brighter Gold */
+            --color-accent-cyan: #00f2ff;
+            --color-accent-orange: #ff9900;
+            --color-card-bg: rgba(22, 30, 60, 0.6);
+            --color-card-border: rgba(255, 215, 0, 0.2);
+            --color-card-hover-border: rgba(255, 215, 0, 0.8);
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--color-primary-bg);
+            color: var(--color-primary-text);
+            overflow-x: hidden;
+        }
+
+        #starfield {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            background-image:
+                radial-gradient(1px 1px at 20% 30%, #fff, transparent),
+                radial-gradient(1px 1px at 80% 10%, #fff, transparent),
+                radial-gradient(1px 1px at 50% 50%, #fff, transparent),
+                radial-gradient(2px 2px at 90% 70%, #fff, transparent);
+            background-size: 100% 100%;
+            animation: move-stars 200s linear infinite;
+        }
+        
+        @keyframes move-stars {
+            from { background-position: 0 0; }
+            to { background-position: -10000px 5000px; }
+        }
+
+        .section-card {
+            background: var(--color-card-bg);
+            border: 1px solid var(--color-card-border);
+            backdrop-filter: blur(12px);
+            transition: all 0.3s ease;
+            transform-style: preserve-3d;
+        }
+        
+        .section-card:hover {
+            transform: translateY(-10px) rotateX(5deg) scale(1.03);
+            border-color: var(--color-card-hover-border);
+            box-shadow: 0 10px 40px rgba(255, 215, 0, 0.4);
+        }
+
+        .fade-in-section {
+            opacity: 0;
+            transform: translateY(30px);
+            transition: opacity 0.8s ease-out, transform 0.8s ease-out;
+        }
+        .fade-in-section.is-visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        
+        .timeline::before {
+            content: '';
+            position: absolute;
+            left: 18px;
+            top: 0;
+            bottom: 0;
+            width: 4px;
+            background: linear-gradient(to top, var(--color-accent-gold) 0%, transparent 100%);
+            opacity: 0.3;
+            border-radius: 2px;
+            z-index: 1;
+        }
+
+        .timeline-item {
+            transform: translateX(20px);
+            opacity: 0;
+            transition: transform 0.6s ease, opacity 0.6s ease;
+        }
+
+        .timeline-item.is-visible {
+            transform: translateX(0);
+            opacity: 1;
+        }
+
+        .timeline-item .dot {
+            position: absolute;
+            left: 0;
+            top: 50%;
+            transform: translate(-50%, -50%);
+            width: 40px;
+            height: 40px;
+            background-color: var(--color-primary-bg);
+            border: 4px solid var(--color-accent-gold);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            color: var(--color-accent-gold);
+            z-index: 10;
+            transition: all 0.3s ease;
+        }
+
+        .timeline-item.is-visible .dot {
+            box-shadow: 0 0 20px var(--color-accent-gold);
+        }
+        
+        .tab-button {
+             background: transparent;
+             border-bottom: 3px solid transparent;
+             transition: all 0.3s ease;
+        }
+        .tab-button.active {
+            color: var(--color-accent-gold);
+            border-bottom-color: var(--color-accent-gold);
+        }
+
+        .text-gradient-gold {
+            background: -webkit-linear-gradient(45deg, var(--color-accent-gold), var(--color-accent-orange));
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        
+        /* Orb animation */
+        .orb-container {
+            perspective: 1000px;
+        }
+        .orb {
+            width: 150px;
+            height: 150px;
+            position: relative;
+            transform-style: preserve-3d;
+            animation: rotate-orb 20s linear infinite;
+        }
+        .orb-ring {
+            position: absolute;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            border: 2px solid;
+            border-radius: 50%;
+        }
+        .orb-ring:nth-child(1) {
+            transform: rotateY(30deg);
+            border-color: var(--color-accent-cyan);
+        }
+        .orb-ring:nth-child(2) {
+            transform: rotateY(-30deg) rotateX(90deg);
+            border-color: var(--color-accent-gold);
+        }
+        .orb-ring:nth-child(3) {
+            transform: rotateX(50deg) rotateY(20deg);
+            border-color: var(--color-accent-orange);
+        }
+        @keyframes rotate-orb {
+            from { transform: rotateY(0) rotateX(0); }
+            to { transform: rotateY(360deg) rotateX(360deg); }
+        }
+
+    </style>
+</head>
+<body class="bg-gray-900 text-white">
+    <div id="starfield"></div>
+
+    <header class="p-6 flex justify-between items-center container mx-auto sticky top-0 z-50 bg-primary-bg/80 backdrop-blur-sm">
+        <h1 class="text-3xl font-bold text-gradient-gold">LumenOrb</h1>
+        <div class="flex items-center gap-6">
+            <nav class="text-lg font-semibold">Investor Portal</nav>
+            <a href="page2.html" class="text-lg font-semibold py-2 px-5 rounded-lg border border-[var(--color-card-border)] hover:border-[var(--color-card-hover-border)] hover:bg-[var(--color-card-bg)] transition-all">
+                &larr; Back to Mission
+            </a>
+        </div>
+    </header>
+
+    <main class="container mx-auto px-6">
+
+        <!-- Hero Section -->
+        <section class="text-center py-20 md:py-24 fade-in-section is-visible">
+            <div class="orb-container mb-12 flex justify-center">
+                <div class="orb">
+                    <div class="orb-ring"></div>
+                    <div class="orb-ring"></div>
+                    <div class="orb-ring"></div>
+                </div>
+            </div>
+            <h2 class="text-4xl md:text-7xl font-black uppercase">Capitalizing on the <br><span class="text-gradient-gold">New Space Economy</span></h2>
+            <p class="text-xl text-gray-300 mt-6 max-w-4xl mx-auto">LumenOrb is a vertically integrated commercial space infrastructure company poised to dominate the emerging multi-trillion dollar economy in Low Earth Orbit.</p>
+            <div class="mt-12 grid grid-cols-1 md:grid-cols-3 gap-8 max-w-5xl mx-auto">
+                <div class="section-card p-6 rounded-lg">
+                    <p class="text-4xl md:text-5xl font-bold text-gradient-gold">$100B+</p>
+                    <p class="text-gray-400 mt-2">Projected Mature Valuation</p>
+                </div>
+                <div class="section-card p-6 rounded-lg">
+                    <p class="text-4xl md:text-5xl font-bold text-gradient-gold">75,000+</p>
+                    <p class="text-gray-400 mt-2">Total Jobs Created (Direct & Indirect)</p>
+                </div>
+                <div class="section-card p-6 rounded-lg">
+                    <p class="text-4xl md:text-5xl font-bold text-gradient-gold">40%</p>
+                    <p class="text-gray-400 mt-2">Target Internal Rate of Return (IRR)</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Business Model Section -->
+        <section class="py-20 fade-in-section">
+            <h3 class="text-4xl font-bold text-center mb-12">Kubera's Orbit: A Diversified Revenue Engine</h3>
+            <div class="flex justify-center mb-8 border-b-2 border-gray-800">
+                <button class="tab-button active py-3 px-6 text-lg font-semibold transition-colors flex items-center gap-2" data-tab="manufacturing">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"></path><polyline points="14 2 14 8 20 8"></polyline><path d="M12 18v-6"></path><path d="M9 15h6"></path></svg>
+                    Manufacturing
+                </button>
+                <button class="tab-button py-3 px-6 text-lg font-semibold transition-colors flex items-center gap-2" data-tab="servicing">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"></path></svg>
+                    Servicing
+                </button>
+                <button class="tab-button py-3 px-6 text-lg font-semibold transition-colors flex items-center gap-2" data-tab="data">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="3" y1="9" x2="21" y2="9"></line><line x1="9" y1="21" x2="9" y2="9"></line></svg>
+                    Data
+                </button>
+                <button class="tab-button py-3 px-6 text-lg font-semibold transition-colors flex items-center gap-2" data-tab="strategic">
+                     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="2" y1="12" x2="22" y2="12"></line><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path></svg>
+                    Strategic
+                </button>
+            </div>
+            <div id="tab-content" class="max-w-4xl mx-auto">
+                <!-- Content will be injected by JS -->
+            </div>
+        </section>
+        
+        <!-- Funding Roadmap -->
+        <section class="py-20 fade-in-section">
+             <h3 class="text-4xl font-bold text-center mb-16">Financial Roadmap: From Seed to LumenOrb Dominance</h3>
+             <div class="max-w-3xl mx-auto relative timeline">
+                <!-- Timeline items will be injected by JS -->
+             </div>
+        </section>
+        
+        <!-- Economic Impact Section -->
+        <section class="py-20 fade-in-section">
+            <h3 class="text-4xl font-bold text-center mb-12">The LumenOrb Multiplier: Economic Impact Analysis</h3>
+            <div class="section-card p-8 rounded-xl max-w-5xl mx-auto">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-8 text-center mb-10">
+                    <div>
+                        <p class="text-5xl font-black text-gradient-gold" id="direct-jobs">0</p>
+                        <p class="text-gray-300 text-lg mt-2">Direct Employment</p>
+                        <p class="text-sm text-gray-500">High-skill jobs at LumenOrb HQ in Surat.</p>
+                    </div>
+                    <div>
+                        <p class="text-5xl font-black text-gradient-gold" id="indirect-jobs">0</p>
+                        <p class="text-gray-300 text-lg mt-2">Indirect Employment</p>
+                         <p class="text-sm text-gray-500">Jobs created in our national supply chain.</p>
+                    </div>
+                    <div>
+                        <p class="text-5xl font-black text-gradient-gold" id="induced-jobs">0</p>
+                        <p class="text-gray-300 text-lg mt-2">Induced Employment</p>
+                         <p class="text-sm text-gray-500">Community jobs spurred by economic activity.</p>
+                    </div>
+                </div>
+                <h4 class="text-2xl font-semibold mb-6 text-center">Direct Workforce Sectoral Breakdown</h4>
+                <div class="w-full p-4">
+                     <div id="employment-chart-legend" class="flex flex-wrap justify-center gap-x-6 gap-y-2 mb-4"></div>
+                    <div id="employment-chart" class="w-full h-8 bg-gray-700 rounded-full flex overflow-hidden border-2 border-gray-600">
+                    </div>
+                </div>
+            </div>
+        </section>
+
+         <!-- Risk Analysis -->
+        <section class="py-20 fade-in-section">
+            <h3 class="text-4xl font-bold text-center mb-12">Risk Analysis & Mitigation</h3>
+            <div id="risk-analysis-container" class="max-w-5xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-8">
+                <!-- Risks will be populated here -->
+            </div>
+        </section>
+
+    </main>
+
+    <footer class="text-center p-10 border-t border-gold-500/10 mt-16">
+        <h4 class="text-2xl font-bold text-gradient-gold">LumenOrb</h4>
+        <p class="text-gray-400 mt-2">This is a confidential investor presentation. © 2025 LumenOrb. All Rights Reserved.</p>
+        <p class="text-gray-500">For inquiries, please contact <a href="mailto:ir@lumenorb.space" class="underline">ir@lumenorb.space</a></p>
+    </footer>
+
+
+    <script>
+    document.addEventListener('DOMContentLoaded', () => {
+        // Fade-in on scroll
+        const sections = document.querySelectorAll('.fade-in-section');
+        const timelineItems = document.querySelectorAll('.timeline-item');
+        
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('is-visible');
+                }
+            });
+        }, { threshold: 0.1 });
+        
+        sections.forEach(section => observer.observe(section));
+        
+        const timelineObserver = new IntersectionObserver((entries) => {
+            entries.forEach((entry, index) => {
+                if (entry.isIntersecting) {
+                   setTimeout(() => {
+                        entry.target.classList.add('is-visible');
+                   }, index * 200);
+                }
+            });
+        }, { threshold: 0.5 });
+        
+        // Number animation
+        function animateValue(obj, start, end, duration) {
+            let startTimestamp = null;
+            const step = (timestamp) => {
+                if (!startTimestamp) startTimestamp = timestamp;
+                const progress = Math.min((timestamp - startTimestamp) / duration, 1);
+                obj.innerHTML = Math.floor(progress * (end - start) + start).toLocaleString();
+                if (progress < 1) window.requestAnimationFrame(step);
+            };
+            window.requestAnimationFrame(step);
+        }
+
+        // Business Model Tabs
+        const tabButtons = document.querySelectorAll('.tab-button');
+        const tabContent = document.getElementById('tab-content');
+        const revenueStreams = {
+            manufacturing: {
+                title: 'In-Space Manufacturing & R&D',
+                revenueShare: '40%',
+                description: 'Leasing of proprietary, cleanroom-grade "Zero-G Lab" and "Manufacturing Fabricator" modules for applications impossible on Earth.',
+                clients: 'Pharmaceuticals, advanced materials firms (ZBLAN optics), semiconductor manufacturers.',
+                pricing: 'Hybrid model: high-value annual lease fee plus a revenue-sharing agreement on orbital-manufactured products.'
+            },
+            servicing: {
+                title: 'Satellite & Asset Servicing',
+                revenueShare: '30%',
+                description: 'Providing on-orbit refueling, repair, life-extension, and repositioning services for commercial and government satellite constellations.',
+                clients: 'Satellite operators, constellation managers, insurance providers.',
+                pricing: 'Per-mission service fees and long-term retainer contracts for fleet management.'
+            },
+            data: {
+                title: 'Orbital Data & Secure Cloud',
+                revenueShare: '20%',
+                description: 'The ultimate "air-gapped" secure data solution. Leasing of radiation-hardened "Orbital Data Center" modules for unparalleled data security and off-planet backup.',
+                clients: 'Financial institutions, government intelligence agencies, cloud providers.',
+                pricing: 'Premium cloud pricing metrics ($/terabyte/month, $/CPU hour) reflecting the unique security value proposition.'
+            },
+            strategic: {
+                title: 'Strategic & National Leasing',
+                revenueShare: '10%',
+                description: 'Leasing of entire bays or custom-built modules to national space agencies for sovereign research, astronaut training, and geopolitical presence in LEO.',
+                clients: 'Governments and national space agencies (e.g., ISRO, ESA, JAXA).',
+                pricing: 'Fixed-term, multi-billion dollar government-to-government contracts.'
+            }
+        };
+
+        function updateTabContent(tabId) {
+            const content = revenueStreams[tabId];
+            tabContent.innerHTML = `
+                <div class="section-card p-8 rounded-lg transition-all duration-500 transform opacity-0 -translate-y-4" id="tab-card">
+                    <div class="flex justify-between items-start mb-4">
+                        <h4 class="text-3xl font-bold text-cyan-300">${content.title}</h4>
+                        <span class="text-2xl font-bold" style="color: var(--color-accent-gold);">${content.revenueShare}</span>
+                    </div>
+                    <p class="text-lg mb-6">${content.description}</p>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div class="bg-gray-900/50 p-4 rounded">
+                            <h5 class="font-semibold" style="color: var(--color-accent-gold);">Target Clients</h5>
+                            <p class="text-gray-300">${content.clients}</p>
+                        </div>
+                        <div class="bg-gray-900/50 p-4 rounded">
+                            <h5 class="font-semibold" style="color: var(--color-accent-gold);">Pricing Model</h5>
+                            <p class="text-gray-300">${content.pricing}</p>
+                        </div>
+                    </div>
+                </div>
+            `;
+            setTimeout(() => {
+                const card = document.getElementById('tab-card');
+                card.classList.remove('opacity-0', '-translate-y-4');
+            }, 50);
+        }
+
+        tabButtons.forEach(button => {
+            button.addEventListener('click', () => {
+                tabButtons.forEach(btn => btn.classList.remove('active'));
+                button.classList.add('active');
+                updateTabContent(button.dataset.tab);
+            });
+        });
+        updateTabContent('manufacturing');
+
+        // Funding Roadmap Timeline
+        const timelineContainer = document.querySelector('.timeline');
+        const fundingStages = [
+            { round: '1', title: 'Seed Round', amount: '$75M', valuation: '$250M', goal: 'Prove core science & secure patents.' },
+            { round: '2', title: 'Series A', amount: '$500M', valuation: '$1.5B', goal: 'Build & test full-scale ground prototypes.' },
+            { round: '3', title: 'Series B', amount: '$2B', valuation: '$8B', goal: 'Construct LumenOrb main bus & sign anchor tenants.' },
+            { round: '4', title: 'IPO', amount: '$10B+', valuation: '$100B+ (Mature)', goal: 'Full-scale deployment and global expansion.' },
+        ];
+
+        fundingStages.forEach(stage => {
+            const item = document.createElement('div');
+            item.className = 'relative pl-16 py-6 timeline-item';
+            item.innerHTML = `
+                <div class="dot">${stage.round}</div>
+                <div class="section-card p-6 rounded-lg">
+                    <div class="flex justify-between items-center mb-2">
+                        <h4 class="text-2xl font-bold text-cyan-300">${stage.title}</h4>
+                        <span class="px-3 py-1 bg-gold-500/20 text-gold-300 rounded-full font-semibold" style="background-color: rgba(212,175,55,0.2); color: #FFD700;">${stage.amount}</span>
+                    </div>
+                    <p class="text-sm text-gray-400 mb-3">Pre-Money Valuation: ${stage.valuation}</p>
+                    <p>${stage.goal}</p>
+                </div>
+            `;
+            timelineContainer.appendChild(item);
+        });
+        document.querySelectorAll('.timeline-item').forEach(item => timelineObserver.observe(item));
+
+        // Economic Impact Animation
+        const impactSection = document.querySelector('.section-card:has(#direct-jobs)');
+        const impactObserver = new IntersectionObserver((entries) => {
+            if(entries[0].isIntersecting){
+                animateValue(document.getElementById('direct-jobs'), 0, 5000, 2000);
+                animateValue(document.getElementById('indirect-jobs'), 0, 25000, 2000);
+                animateValue(document.getElementById('induced-jobs'), 0, 60000, 2000);
+                impactObserver.unobserve(impactSection);
+            }
+        }, { threshold: 0.5 });
+        impactObserver.observe(impactSection);
+
+        const workforceData = [
+            { sector: 'Engineering', percent: 45, color: '#00A3B0' },
+            { sector: 'Mission Control', percent: 15, color: '#FF9900' },
+            { sector: 'Manufacturing', percent: 10, color: '#FFD700' },
+            { sector: 'Business', percent: 10, color: '#FF5733' },
+            { sector: 'Corporate', percent: 10, color: '#C70039' },
+            { sector: 'R&D/Other', percent: 10, color: '#9B59B6' },
+        ];
+        
+        const chart = document.getElementById('employment-chart');
+        const legend = document.getElementById('employment-chart-legend');
+        workforceData.forEach(item => {
+            const segment = document.createElement('div');
+            segment.style.width = `${item.percent}%`;
+            segment.style.backgroundColor = item.color;
+            chart.appendChild(segment);
+            const legendItem = document.createElement('div');
+            legendItem.className = 'flex items-center text-sm';
+            legendItem.innerHTML = `<span class="w-3 h-3 rounded-full mr-2" style="background-color: ${item.color}"></span> ${item.sector} (${item.percent}%)`;
+            legend.appendChild(legendItem);
+        });
+        
+        // Risk Analysis
+        const riskContainer = document.getElementById('risk-analysis-container');
+        const risks = [
+            { title: 'Technical Failure', mitigation: 'Extreme redundancy in all critical systems; comprehensive on-orbit insurance policies.', icon: 'M18.36 6.64a9 9 0 1 1-12.73 0' },
+            { title: 'Market Adoption', mitigation: 'Secure long-term, binding contracts with anchor tenants before major capital deployment.', icon: 'M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2' },
+            { title: 'Orbital Debris', mitigation: 'Monetize the solution by positioning the Chakravyu Initiative as a paid debris-removal service, turning a risk into a revenue center.', icon: 'M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z' },
+            { title: 'Regulatory & Geopolitical', mitigation: 'Proactive government relations, positioning LumenOrb as a strategic national asset for India to ensure regulatory and political support.', icon: 'M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z' },
+        ];
+        
+        risks.forEach(risk => {
+             const div = document.createElement('div');
+             div.className = 'section-card p-6 rounded-lg risk-item';
+             div.innerHTML = `
+                 <div class="flex items-start gap-4">
+                     <div class="flex-shrink-0">
+                         <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-gold-400" style="color: var(--color-accent-gold);"><path d="${risk.icon}"></path></svg>
+                     </div>
+                     <div>
+                         <h4 class="text-2xl font-bold text-cyan-300 mb-3">${risk.title}</h4>
+                         <p class="text-gray-300"><span class="font-semibold" style="color: var(--color-accent-gold);">Mitigation:</span> ${risk.mitigation}</p>
+                     </div>
+                 </div>
+             `;
+             riskContainer.appendChild(div);
+        });
+
+    });
+    </script>
+</body>
+</html>
+
